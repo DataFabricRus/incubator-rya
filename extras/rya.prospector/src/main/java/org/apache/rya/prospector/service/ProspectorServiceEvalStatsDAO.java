@@ -21,6 +21,7 @@ package org.apache.rya.prospector.service;
 import static java.util.Objects.requireNonNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -39,11 +40,15 @@ import org.apache.rya.prospector.domain.TripleValueType;
 import org.apache.rya.prospector.utils.ProspectorConstants;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An ${@link org.apache.rya.api.persist.RdfEvalStatsDAO} that uses the Prospector Service underneath return counts.
  */
 public class ProspectorServiceEvalStatsDAO implements RdfEvalStatsDAO<RdfCloudTripleStoreConfiguration> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ProspectorServiceEvalStatsDAO.class);
 
     private ProspectorService prospectorService;
 
@@ -130,6 +135,9 @@ public class ProspectorServiceEvalStatsDAO implements RdfEvalStatsDAO<RdfCloudTr
         } catch (final TableNotFoundException e) {
             throw new RdfDAOException(e);
         }
+
+        LOG.info("Cardinality of {} is {}", Arrays.toString(val.toArray()), cardinality);
+
         return cardinality;
     }
 

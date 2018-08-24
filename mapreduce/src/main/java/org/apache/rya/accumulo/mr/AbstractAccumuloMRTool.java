@@ -225,6 +225,16 @@ public abstract class AbstractAccumuloMRTool implements Tool {
         job.setInputFormatClass(RdfFileInputFormat.class);
     }
 
+    protected void setupFileInputs(Job job, String commaSeparatedPaths, RDFFormat defaultFormat) throws IOException {
+        RDFFormat format = MRUtils.getRDFFormat(conf);
+        if (format == null) {
+            format = defaultFormat;
+        }
+        RdfFileInputFormat.addInputPaths(job, commaSeparatedPaths);
+        RdfFileInputFormat.setRDFFormat(job, format);
+        job.setInputFormatClass(RdfFileInputFormat.class);
+    }
+
     /**
      * Sets up Accumulo output for a job: allows the job to write (String,
      * Mutation) pairs, where the Mutation will be written to the table named by

@@ -18,13 +18,14 @@
  */
 package org.apache.rya.prospector.domain;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.rya.prospector.mr.Prospector;
 import org.apache.rya.prospector.plans.IndexWorkPlan;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.util.Objects;
 
 /**
  * Represents a piece of information that is being counted during the process
@@ -138,6 +139,26 @@ public class IntermediateProspect implements WritableComparable<IntermediatePros
         dataType = dataInput.readUTF();
         tripleValueType = TripleValueType.valueOf(dataInput.readUTF());
         visibility = dataInput.readUTF();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof IntermediateProspect) {
+            IntermediateProspect other = (IntermediateProspect) obj;
+
+            return index.equals(other.index) &&
+                    data.equals(other.data) &&
+                    dataType.equals(other.dataType) &&
+                    tripleValueType.equals(other.tripleValueType) &&
+                    visibility.equals(other.visibility);
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(index, data, dataType, tripleValueType, visibility);
     }
 
     /**

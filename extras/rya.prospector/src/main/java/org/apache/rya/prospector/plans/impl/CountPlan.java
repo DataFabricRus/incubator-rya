@@ -79,72 +79,72 @@ public class CountPlan implements IndexWorkPlan {
         // Create an entry for each TripleValueType type.
         entries.add(new CustomEntry<IntermediateProspect, LongWritable>(
                 IntermediateProspect.builder()
-                    .setIndex(COUNT)
-                    .setData(subject.getData())
-                    .setDataType(URITYPE)
-                    .setTripleValueType( TripleValueType.SUBJECT )
-                    .setVisibility(visibility)
-                    .build()
+                        .setIndex(COUNT)
+                        .setData(subject.getData())
+                        .setDataType(URITYPE)
+                        .setTripleValueType( TripleValueType.SUBJECT )
+                        .setVisibility(visibility)
+                        .build()
                 , ONE));
 
         entries.add(new CustomEntry<IntermediateProspect, LongWritable>(
                 IntermediateProspect.builder()
-                    .setIndex(COUNT)
-                    .setData(predicate.getData())
-                    .setDataType(URITYPE)
-                    .setTripleValueType( TripleValueType.PREDICATE )
-                    .setVisibility(visibility)
-                    .build()
+                        .setIndex(COUNT)
+                        .setData(predicate.getData())
+                        .setDataType(URITYPE)
+                        .setTripleValueType( TripleValueType.PREDICATE )
+                        .setVisibility(visibility)
+                        .build()
                 , ONE));
 
         entries.add(new CustomEntry<IntermediateProspect, LongWritable>(
                 IntermediateProspect.builder()
-                    .setIndex(COUNT)
-                    .setData(object.getData())
-                    .setDataType(object.getDataType().stringValue())
-                    .setTripleValueType( TripleValueType.OBJECT )
-                    .setVisibility(visibility)
-                    .build()
+                        .setIndex(COUNT)
+                        .setData(object.getData())
+                        .setDataType(object.getDataType().stringValue())
+                        .setTripleValueType( TripleValueType.OBJECT )
+                        .setVisibility(visibility)
+                        .build()
                 , ONE));
 
         entries.add(new CustomEntry<IntermediateProspect, LongWritable>(
                 IntermediateProspect.builder()
-                    .setIndex(COUNT)
-                    .setData(subjpred)
-                    .setDataType(XMLSchema.STRING.toString())
-                    .setTripleValueType( TripleValueType.SUBJECT_PREDICATE )
-                    .setVisibility(visibility)
-                    .build()
+                        .setIndex(COUNT)
+                        .setData(subjpred)
+                        .setDataType(XMLSchema.STRING.toString())
+                        .setTripleValueType( TripleValueType.SUBJECT_PREDICATE )
+                        .setVisibility(visibility)
+                        .build()
                 , ONE));
 
         entries.add(new CustomEntry<IntermediateProspect, LongWritable>(
                 IntermediateProspect.builder()
-                    .setIndex(COUNT)
-                    .setData(subjobj)
-                    .setDataType(XMLSchema.STRING.toString())
-                    .setTripleValueType(TripleValueType.SUBJECT_OBJECT)
-                    .setVisibility(visibility)
-                    .build()
+                        .setIndex(COUNT)
+                        .setData(subjobj)
+                        .setDataType(XMLSchema.STRING.toString())
+                        .setTripleValueType(TripleValueType.SUBJECT_OBJECT)
+                        .setVisibility(visibility)
+                        .build()
                 , ONE));
 
         entries.add(new CustomEntry<IntermediateProspect, LongWritable>(
                 IntermediateProspect.builder()
-                    .setIndex(COUNT)
-                    .setData(predobj)
-                    .setDataType(XMLSchema.STRING.toString())
-                    .setTripleValueType(TripleValueType.PREDICATE_OBJECT)
-                    .setVisibility(visibility)
-                    .build()
+                        .setIndex(COUNT)
+                        .setData(predobj)
+                        .setDataType(XMLSchema.STRING.toString())
+                        .setTripleValueType(TripleValueType.PREDICATE_OBJECT)
+                        .setVisibility(visibility)
+                        .build()
                 , ONE));
 
         entries.add(new CustomEntry<IntermediateProspect, LongWritable>(
                 IntermediateProspect.builder()
-                    .setIndex(COUNT)
-                    .setData(namespace)
-                    .setDataType(URITYPE)
-                    .setTripleValueType(TripleValueType.ENTITY)
-                    .setVisibility(visibility)
-                    .build()
+                        .setIndex(COUNT)
+                        .setData(namespace)
+                        .setDataType(URITYPE)
+                        .setTripleValueType(TripleValueType.ENTITY)
+                        .setVisibility(visibility)
+                        .build()
                 , ONE));
         return entries;
     }
@@ -202,17 +202,18 @@ public class CountPlan implements IndexWorkPlan {
 
         final BatchScanner bs = connector.createBatchScanner(tableName, new Authorizations(auths), 4);
         final List<Range> ranges = new ArrayList<>();
-        int max = 1000; //by default only return 1000 prospects maximum
-        if (prospectTimes != null) {
-            for(final Long prospectTime : prospectTimes) {
-                ranges.add(new Range(type + DELIM + compositeIndex + DELIM + ProspectorUtils.getReverseIndexDateTime(new Date(prospectTime))));
-            }
-        } else {
-            max = 1; //only return the latest if no prospectTimes given
-            final String prefix = type + DELIM + compositeIndex + DELIM;
-            ranges.add(new Range(prefix, prefix + RdfCloudTripleStoreConstants.LAST));
-        }
 
+//        int max = 1000; //by default only return 1000 prospects maximum
+//        if (prospectTimes != null) {
+//            for(final Long prospectTime : prospectTimes) {
+//                ranges.add(new Range(type + DELIM + compositeIndex + DELIM + ProspectorUtils.getReverseIndexDateTime(new Date(prospectTime))));
+//            }
+//        } else {
+        int max = 1; //only return the latest if no prospectTimes given
+        final String prefix = type + DELIM + compositeIndex;
+        ranges.add(new Range(prefix, prefix + DELIM + RdfCloudTripleStoreConstants.LAST));
+//        }
+//
         bs.setRanges(ranges);
         if (dataType != null) {
             bs.fetchColumn(new Text(COUNT), new Text(dataType));
@@ -223,7 +224,7 @@ public class CountPlan implements IndexWorkPlan {
         final List<IndexEntry> indexEntries = new ArrayList<IndexEntry>();
         final Iterator<Entry<Key, Value>> iter = bs.iterator();
 
-        while (iter.hasNext() && indexEntries.size() <= max) {
+        while (iter.hasNext() && indexEntries.size() < max) {
             final Entry<Key, Value> entry = iter.next();
             final Key k = entry.getKey();
             final Value v = entry.getValue();
@@ -232,8 +233,8 @@ public class CountPlan implements IndexWorkPlan {
             String values = "";
             // if it is a composite index, then return the type as a composite index
             if (type.equalsIgnoreCase(TripleValueType.SUBJECT_PREDICATE.getIndexType()) ||
-                type.equalsIgnoreCase(TripleValueType.SUBJECT_OBJECT.getIndexType()) ||
-                type.equalsIgnoreCase(TripleValueType.PREDICATE_OBJECT.getIndexType())) {
+                    type.equalsIgnoreCase(TripleValueType.SUBJECT_OBJECT.getIndexType()) ||
+                    type.equalsIgnoreCase(TripleValueType.PREDICATE_OBJECT.getIndexType())) {
                 values =rowArr[1] + DELIM + rowArr[2];
             }
             else  {
@@ -247,14 +248,14 @@ public class CountPlan implements IndexWorkPlan {
 
             indexEntries.add(
                     IndexEntry.builder()
-                        .setData(values)
-                        .setTripleValueType(rowArr[0])
-                        .setIndex(COUNT)
-                        .setDataType(entryDataType)
-                        .setVisibility(entryVisibility)
-                        .setCount(entryCount)
-                        .setTimestamp(k.getTimestamp())
-                        .build());
+                            .setData(values)
+                            .setTripleValueType(rowArr[0])
+                            .setIndex(COUNT)
+                            .setDataType(entryDataType)
+                            .setVisibility(entryVisibility)
+                            .setCount(entryCount)
+                            .setTimestamp(k.getTimestamp())
+                            .build());
         }
         bs.close();
 

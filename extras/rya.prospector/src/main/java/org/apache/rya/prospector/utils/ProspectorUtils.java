@@ -59,9 +59,11 @@ public class ProspectorUtils {
 
     public static String getReverseIndexDateTime(final Date date) {
         Validate.notNull(date);
-        final String formattedDateString = new SimpleDateFormat(INDEXED_DATE_FORMAT).format(date);
+        String formattedDateString = new SimpleDateFormat(INDEXED_DATE_FORMAT).format(date);
+        if(formattedDateString.length() > 18) {
+            formattedDateString = formattedDateString.substring(0, 18);
+        }
         final long diff = INDEXED_DATE_SORT_VAL - Long.valueOf(formattedDateString);
-
         return Long.toString(diff);
     }
 

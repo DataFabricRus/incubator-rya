@@ -8,9 +8,9 @@ package org.apache.rya.api.persist.utils;
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -39,6 +39,8 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.QueryEvaluationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Date: 7/20/12
@@ -46,15 +48,23 @@ import org.eclipse.rdf4j.query.QueryEvaluationException;
  */
 public class RyaDAOHelper {
 
+    private static final Logger LOG = LoggerFactory.getLogger(RyaDAOHelper.class);
+
     public static CloseableIteration<Statement, QueryEvaluationException> query(RyaDAO ryaDAO, Resource subject, IRI predicate, Value object, RdfCloudTripleStoreConfiguration conf, Resource... contexts) throws QueryEvaluationException {
         return query(ryaDAO, new NullableStatementImpl(subject, predicate, object, contexts), conf);
     }
 
     public static CloseableIteration<Statement, QueryEvaluationException> query(RyaDAO ryaDAO, Statement stmt, RdfCloudTripleStoreConfiguration conf) throws QueryEvaluationException {
+        LOG.info("Started fetching {}...", stmt);
+
         final CloseableIteration<RyaStatement, RyaDAOException> query;
         try {
+            long start = System.currentTimeMillis();
+
             query = ryaDAO.getQueryEngine().query(RdfToRyaConversions.convertStatement(stmt),
                     conf);
+
+            LOG.info("Time to prefetch a single statement - {}ms", (System.currentTimeMillis() - start));
         } catch (RyaDAOException e) {
             throw new QueryEvaluationException(e);
         }
@@ -110,14 +120,21 @@ public class RyaDAOHelper {
     }
 
     public static CloseableIteration<? extends Map.Entry<Statement, BindingSet>, QueryEvaluationException> query(RyaDAO ryaDAO, Collection<Map.Entry<Statement, BindingSet>> statements, RdfCloudTripleStoreConfiguration conf) throws QueryEvaluationException {
-        Collection<Map.Entry<RyaStatement, BindingSet>> ryaStatements = new ArrayList<Map.Entry<RyaStatement, BindingSet>>(statements.size());
+        LOG.info("Started fetching statements with bindings...");
+
+        Collection<Map.Entry<RyaStatement, BindingSet>> ryaStatements = new ArrayList<>(statements.size());
         for (Map.Entry<Statement, BindingSet> entry : statements) {
-            ryaStatements.add(new RdfCloudTripleStoreUtils.CustomEntry<RyaStatement, BindingSet>
+            ryaStatements.add(new RdfCloudTripleStoreUtils.CustomEntry<>
                     (RdfToRyaConversions.convertStatement(entry.getKey()), entry.getValue()));
         }
         final CloseableIteration<? extends Map.Entry<RyaStatement, BindingSet>, RyaDAOException> query;
         try {
+            long start = System.currentTimeMillis();
+
             query = ryaDAO.getQueryEngine().queryWithBindingSet(ryaStatements, conf);
+
+            LOG.info("Time to prefetch {} statements - {}ms",
+                    statements.size(), (System.currentTimeMillis() - start));
         } catch (RyaDAOException e) {
             throw new QueryEvaluationException(e);
         }

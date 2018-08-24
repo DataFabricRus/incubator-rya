@@ -42,13 +42,7 @@ import org.apache.rya.api.persist.RyaDAOException;
 import org.apache.rya.api.persist.joinselect.SelectivityEvalDAO;
 import org.apache.rya.api.persist.utils.RyaDAOHelper;
 import org.apache.rya.api.resolver.RdfToRyaConversions;
-import org.apache.rya.rdftriplestore.evaluation.FilterRangeVisitor;
-import org.apache.rya.rdftriplestore.evaluation.ParallelEvaluationStrategyImpl;
-import org.apache.rya.rdftriplestore.evaluation.QueryJoinOptimizer;
-import org.apache.rya.rdftriplestore.evaluation.QueryJoinSelectOptimizer;
-import org.apache.rya.rdftriplestore.evaluation.RdfCloudTripleStoreEvaluationStatistics;
-import org.apache.rya.rdftriplestore.evaluation.RdfCloudTripleStoreSelectivityEvaluationStatistics;
-import org.apache.rya.rdftriplestore.evaluation.SeparateFilterJoinsVisitor;
+import org.apache.rya.rdftriplestore.evaluation.*;
 import org.apache.rya.rdftriplestore.inference.AllValuesFromVisitor;
 import org.apache.rya.rdftriplestore.inference.DomainRangeVisitor;
 import org.apache.rya.rdftriplestore.inference.HasSelfVisitor;
@@ -308,20 +302,20 @@ public class RdfCloudTripleStoreConnection<C extends RdfCloudTripleStoreConfigur
             final ParallelEvaluationStrategyImpl strategy = new ParallelEvaluationStrategyImpl(
                     new StoreTripleSource<C>(queryConf, ryaDAO), inferenceEngine, dataset, queryConf);
 
-                (new BindingAssigner()).optimize(tupleExpr, dataset, bindings);
-                (new ConstantOptimizer(strategy)).optimize(tupleExpr, dataset,
-                        bindings);
-                (new CompareOptimizer()).optimize(tupleExpr, dataset, bindings);
-                (new ConjunctiveConstraintSplitter()).optimize(tupleExpr, dataset,
-                        bindings);
-                (new DisjunctiveConstraintOptimizer()).optimize(tupleExpr, dataset,
-                        bindings);
-                (new SameTermFilterOptimizer()).optimize(tupleExpr, dataset,
-                        bindings);
-                (new QueryModelNormalizer()).optimize(tupleExpr, dataset, bindings);
+            (new BindingAssigner()).optimize(tupleExpr, dataset, bindings);
+            (new ConstantOptimizer(strategy)).optimize(tupleExpr, dataset,
+                    bindings);
+            (new CompareOptimizer()).optimize(tupleExpr, dataset, bindings);
+            (new ConjunctiveConstraintSplitter()).optimize(tupleExpr, dataset,
+                    bindings);
+            (new DisjunctiveConstraintOptimizer()).optimize(tupleExpr, dataset,
+                    bindings);
+            (new SameTermFilterOptimizer()).optimize(tupleExpr, dataset,
+                    bindings);
+            (new QueryModelNormalizer()).optimize(tupleExpr, dataset, bindings);
 
-                (new IterativeEvaluationOptimizer()).optimize(tupleExpr, dataset,
-                        bindings);
+            (new IterativeEvaluationOptimizer()).optimize(tupleExpr, dataset,
+                    bindings);
 
             if (!optimizers.isEmpty()) {
                 for (final Class<QueryOptimizer> optclz : optimizers) {
@@ -353,7 +347,7 @@ public class RdfCloudTripleStoreConnection<C extends RdfCloudTripleStoreConfigur
 
             if (queryConf.isInfer()
                     && this.inferenceEngine != null
-                    ) {
+            ) {
                 try {
                     tupleExpr.visit(new DomainRangeVisitor(queryConf, inferenceEngine));
                     tupleExpr.visit(new SomeValuesFromVisitor(queryConf, inferenceEngine));
@@ -400,8 +394,11 @@ public class RdfCloudTripleStoreConnection<C extends RdfCloudTripleStoreConfigur
                     final QueryJoinSelectOptimizer qjso = new QueryJoinSelectOptimizer(stats, selectEvalDAO);
                     qjso.optimize(tupleExpr, dataset, bindings);
                 } else {
-                    final QueryJoinOptimizer qjo = new QueryJoinOptimizer(stats);
-                    qjo.optimize(tupleExpr, dataset, bindings); // TODO: Make pluggable
+//                    final QueryJoinOptimizer qjo = new QueryJoinOptimizer(stats);
+//                    qjo.optimize(tupleExpr, dataset, bindings); // TODO: Make pluggable
+
+                    final QueryOptimizer qjo = new ConjunctiveJoinOptimizer(stats);
+                    qjo.optimize(tupleExpr, dataset, bindings);
                 }
             }
 
@@ -411,7 +408,7 @@ public class RdfCloudTripleStoreConnection<C extends RdfCloudTripleStoreConfigur
 
                 @Override
                 public void remove() throws QueryEvaluationException {
-                  iter.remove();
+                    iter.remove();
                 }
 
                 @Override
@@ -481,7 +478,7 @@ public class RdfCloudTripleStoreConnection<C extends RdfCloudTripleStoreConfigur
 
             @Override
             public void close() throws SailException {
-            isClosed = true;
+                isClosed = true;
                 try {
                     evaluate.close();
                 } catch (final QueryEvaluationException e) {
