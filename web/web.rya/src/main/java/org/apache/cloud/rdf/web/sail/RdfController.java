@@ -19,19 +19,6 @@ package org.apache.cloud.rdf.web.sail;
  * under the License.
  */
 
-import static org.apache.rya.api.RdfCloudTripleStoreConstants.VALUE_FACTORY;
-
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.log4j.Logger;
 import org.apache.rya.api.RdfCloudTripleStoreConfiguration;
@@ -41,22 +28,8 @@ import org.apache.rya.rdftriplestore.RdfCloudTripleStoreConnection;
 import org.apache.rya.rdftriplestore.utils.RdfFormatUtils;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
-import org.eclipse.rdf4j.query.BindingSet;
-import org.eclipse.rdf4j.query.GraphQuery;
-import org.eclipse.rdf4j.query.MalformedQueryException;
-import org.eclipse.rdf4j.query.QueryEvaluationException;
-import org.eclipse.rdf4j.query.QueryLanguage;
-import org.eclipse.rdf4j.query.QueryResultHandlerException;
-import org.eclipse.rdf4j.query.TupleQuery;
-import org.eclipse.rdf4j.query.TupleQueryResultHandler;
-import org.eclipse.rdf4j.query.TupleQueryResultHandlerException;
-import org.eclipse.rdf4j.query.Update;
-import org.eclipse.rdf4j.query.UpdateExecutionException;
-import org.eclipse.rdf4j.query.parser.ParsedGraphQuery;
-import org.eclipse.rdf4j.query.parser.ParsedOperation;
-import org.eclipse.rdf4j.query.parser.ParsedTupleQuery;
-import org.eclipse.rdf4j.query.parser.ParsedUpdate;
-import org.eclipse.rdf4j.query.parser.QueryParserUtil;
+import org.eclipse.rdf4j.query.*;
+import org.eclipse.rdf4j.query.parser.*;
 import org.eclipse.rdf4j.query.resultio.sparqljson.SPARQLResultsJSONWriter;
 import org.eclipse.rdf4j.query.resultio.sparqlxml.SPARQLResultsXMLWriter;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -76,6 +49,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import static org.apache.rya.api.RdfCloudTripleStoreConstants.VALUE_FACTORY;
+
 /**
  * Class RdfController
  * Date: Mar 7, 2012
@@ -84,8 +69,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 public class RdfController {
     private static final Logger log = Logger.getLogger(RdfController.class);
-
-    private static final int QUERY_TIME_OUT_SECONDS = 120;
 
     @Autowired
     SailRepository repository;
@@ -102,6 +85,7 @@ public class RdfController {
                          @RequestParam(value = RdfCloudTripleStoreConfiguration.CONF_RESULT_FORMAT, required = false) final String emit,
                          @RequestParam(value = "padding", required = false) final String padding,
                          @RequestParam(value = "callback", required = false) final String callback,
+                         @RequestParam(value = "query.timeout", required = false) final Integer timeout,
                          final HttpServletRequest request,
                          final HttpServletResponse response) {
         // WARNING: if you add to the above request variables,
@@ -109,16 +93,19 @@ public class RdfController {
         SailRepositoryConnection conn = null;
         final Thread queryThread = Thread.currentThread();
         auth = StringUtils.arrayToCommaDelimitedString(provider.getUserAuths(request));
+
         final Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
+        if (timeout != null && timeout > 0) {
+            timer.schedule(new TimerTask() {
 
-            @Override
-            public void run() {
-                log.debug("interrupting");
-                queryThread.interrupt();
+                @Override
+                public void run() {
+                    log.debug("interrupting");
+                    queryThread.interrupt();
 
-            }
-        }, QUERY_TIME_OUT_SECONDS * 1000);
+                }
+            }, timeout * 1000);
+        }
 
         try {
             final ServletOutputStream os = response.getOutputStream();
@@ -173,7 +160,9 @@ public class RdfController {
             }
         }
 
-        timer.cancel();
+        if (timeout != null && timeout > 0) {
+            timer.cancel();
+        }
     }
 
     private void performQuery(final String query, final RepositoryConnection conn, final String auth, final String infer, final String nullout, final TupleQueryResultHandler handler) throws RepositoryException, MalformedQueryException, QueryEvaluationException, TupleQueryResultHandlerException {
@@ -212,8 +201,8 @@ public class RdfController {
             final long startTime = System.currentTimeMillis();
             tupleQuery.evaluate(sparqlWriter);
             log.info(String.format("Query Time = %.3f   Result Count = %s\n",
-                                   (System.currentTimeMillis() - startTime) / 1000.,
-                                   sparqlWriter.getCount()));
+                    (System.currentTimeMillis() - startTime) / 1000.,
+                    sparqlWriter.getCount()));
         }
 
     }
@@ -260,6 +249,7 @@ public class RdfController {
         }
 
     }
+
     private void performUpdate(final String query, final SailRepositoryConnection conn, final ServletOutputStream os, final String infer, final String vis) throws RepositoryException, MalformedQueryException, IOException {
         final Update update = conn.prepareUpdate(QueryLanguage.SPARQL, query);
         if (infer != null && infer.length() > 0) {
@@ -288,7 +278,7 @@ public class RdfController {
         private final TupleQueryResultHandler indir;
         private int count = 0;
 
-        public CountingTupleQueryResultHandlerWrapper(final TupleQueryResultHandler indir){
+        public CountingTupleQueryResultHandlerWrapper(final TupleQueryResultHandler indir) {
             this.indir = indir;
         }
 
@@ -324,8 +314,8 @@ public class RdfController {
 
     @RequestMapping(value = "/loadrdf", method = RequestMethod.POST)
     public void loadRdf(@RequestParam(required = false) final String format,
-            @RequestParam(value = RdfCloudTripleStoreConfiguration.CONF_CV, required = false) final String cv,
-            @RequestParam(required = false) final String graph,
+                        @RequestParam(value = RdfCloudTripleStoreConfiguration.CONF_CV, required = false) final String cv,
+                        @RequestParam(required = false) final String graph,
                         @RequestBody final String body,
                         final HttpServletResponse response)
             throws RepositoryException, IOException, RDFParseException {

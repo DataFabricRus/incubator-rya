@@ -98,12 +98,14 @@ under the License.
         </dependency>
 
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-        </dependency>
-        <dependency>
             <groupId>commons-pool</groupId>
             <artifactId>commons-pool</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.2.3</version>
         </dependency>
 
 		<dependency>
@@ -129,6 +131,7 @@ under the License.
 				<directory>src/main/webapp/WEB-INF</directory>
 				<includes>
 					<include>web.xml</include>
+                    <include>logback.xml</include>
 				</includes>
 			</resource>
 		</resources>
@@ -168,6 +171,7 @@ under the License.
 							<exclude>**/*.nt</exclude>
 							<!-- data file -->
 							<exclude>**/*.data</exclude>
+                            <exclude>**/logback.xml</exclude>
 						</excludes>
 					</configuration>
 				</plugin>

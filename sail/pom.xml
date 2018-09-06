@@ -69,6 +69,12 @@ under the License.
             <artifactId>rdf4j-runtime</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.mapdb</groupId>
+            <artifactId>mapdb</artifactId>
+            <version>3.0.7</version>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.mockito</groupId>
@@ -83,6 +89,11 @@ under the License.
         <dependency>
             <groupId>org.apache.rya</groupId>
             <artifactId>accumulo.rya</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
             <scope>test</scope>
         </dependency>
 

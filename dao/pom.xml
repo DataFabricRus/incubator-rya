@@ -34,6 +34,7 @@ under the License.
 
     <modules>
         <module>accumulo.rya</module>
+        <module>accumulo.iterators</module>
         <module>mongodb.rya</module>
     </modules>
 </project>

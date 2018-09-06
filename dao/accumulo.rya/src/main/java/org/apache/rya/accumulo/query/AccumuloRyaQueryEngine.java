@@ -8,9 +8,9 @@ package org.apache.rya.accumulo.query;
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -19,20 +19,12 @@ package org.apache.rya.accumulo.query;
  * under the License.
  */
 
-import static org.apache.rya.api.RdfCloudTripleStoreUtils.layoutToTable;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-
-import org.apache.accumulo.core.client.BatchScanner;
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.IteratorSetting;
+import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.FluentIterable;
+import com.google.common.collect.Iterators;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.Scanner;
-import org.apache.accumulo.core.client.ScannerBase;
 import org.apache.accumulo.core.data.Column;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
@@ -42,13 +34,14 @@ import org.apache.accumulo.core.iterators.user.TimestampFilter;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.io.Text;
 import org.apache.rya.accumulo.AccumuloRdfConfiguration;
+import org.apache.rya.accumulo.iterators.AdjacentSubjectsIterator;
+import org.apache.rya.accumulo.utils.RangeUtils;
 import org.apache.rya.api.RdfCloudTripleStoreConfiguration;
-import org.apache.rya.api.RdfCloudTripleStoreConstants;
 import org.apache.rya.api.RdfCloudTripleStoreConstants.TABLE_LAYOUT;
+import org.apache.rya.api.domain.RyaIRI;
 import org.apache.rya.api.domain.RyaRange;
 import org.apache.rya.api.domain.RyaStatement;
 import org.apache.rya.api.domain.RyaType;
-import org.apache.rya.api.domain.RyaIRI;
 import org.apache.rya.api.layout.TableLayoutStrategy;
 import org.apache.rya.api.persist.RyaDAOException;
 import org.apache.rya.api.persist.query.BatchRyaQuery;
@@ -66,10 +59,12 @@ import org.calrissian.mango.collect.FluentCloseableIterable;
 import org.eclipse.rdf4j.common.iteration.CloseableIteration;
 import org.eclipse.rdf4j.query.BindingSet;
 
-import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.Iterators;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+import static org.apache.rya.api.RdfCloudTripleStoreUtils.layoutToTable;
 
 /**
  * Date: 7/17/12 Time: 9:28 AM
@@ -152,7 +147,7 @@ public class AccumuloRyaQueryEngine implements RyaQueryEngine<AccumuloRdfConfigu
                     throw new IllegalArgumentException("TriplePattern[" + stmt + "] not supported");
                 }
 
-                Map.Entry<RdfCloudTripleStoreConstants.TABLE_LAYOUT, ByteRange> entry = strategy.defineRange(stmt.getSubject(),
+                Map.Entry<TABLE_LAYOUT, ByteRange> entry = strategy.defineRange(stmt.getSubject(),
                         stmt.getPredicate(), stmt.getObject(), stmt.getContext(), conf);
 
                 // use range to set scanner
@@ -169,8 +164,8 @@ public class AccumuloRyaQueryEngine implements RyaQueryEngine<AccumuloRdfConfigu
                 // as the Value specified in the BindingSet
                 if (context != null) {
                     byte[] contextBytes = context.getData().getBytes("UTF-8");
-                    rangeMapRange = range.bound(new Column(contextBytes, new byte[] { (byte) 0x00 }, new byte[] { (byte) 0x00 }),
-                            new Column(contextBytes, new byte[] { (byte) 0xff }, new byte[] { (byte) 0xff }));
+                    rangeMapRange = range.bound(new Column(contextBytes, new byte[]{(byte) 0x00}, new byte[]{(byte) 0x00}),
+                            new Column(contextBytes, new byte[]{(byte) 0xff}, new byte[]{(byte) 0xff}));
                 }
                 // ranges gets a Range that has no Column bounds, but
                 // rangeMap gets a Range that does have Column bounds
@@ -277,7 +272,7 @@ public class AccumuloRyaQueryEngine implements RyaQueryEngine<AccumuloRdfConfigu
             TripleRowRegex tripleRowRegex = null;
             if (strategy != null) {
                 // otherwise, full table scan is supported
-                Map.Entry<RdfCloudTripleStoreConstants.TABLE_LAYOUT, ByteRange> entry = strategy.defineRange(subject, predicate, object,
+                Map.Entry<TABLE_LAYOUT, ByteRange> entry = strategy.defineRange(subject, predicate, object,
                         context, null);
                 layout = entry.getKey();
                 ByteRange byteRange = entry.getValue();
@@ -356,7 +351,7 @@ public class AccumuloRyaQueryEngine implements RyaQueryEngine<AccumuloRdfConfigu
                     throw new IllegalArgumentException("TriplePattern[" + stmt + "] not supported");
                 }
 
-                Map.Entry<RdfCloudTripleStoreConstants.TABLE_LAYOUT, ByteRange> entry = strategy.defineRange(stmt.getSubject(),
+                Map.Entry<TABLE_LAYOUT, ByteRange> entry = strategy.defineRange(stmt.getSubject(),
                         stmt.getPredicate(), stmt.getObject(), stmt.getContext(), null);
 
                 // use range to set scanner
@@ -385,17 +380,14 @@ public class AccumuloRyaQueryEngine implements RyaQueryEngine<AccumuloRdfConfigu
                 final RyaIRI fcontext = context;
                 final RdfCloudTripleStoreConfiguration fconf = ryaQuery.getConf();
                 FluentIterable<RyaStatement> fluent = FluentIterable.from(ranges)
-                        .transformAndConcat(new Function<Range, Iterable<Map.Entry<Key, Value>>>() {
-                            @Override
-                            public Iterable<Map.Entry<Key, Value>> apply(Range range) {
-                                try {
-                                    Scanner scanner = connector.createScanner(table, authorizations);
-                                    scanner.setRange(range);
-                                    fillScanner(scanner, fcontext, null, ttl, null, tripleRowRegex, fconf);
-                                    return scanner;
-                                } catch (Exception e) {
-                                    throw new RuntimeException(e);
-                                }
+                        .transformAndConcat((Function<Range, Iterable<Map.Entry<Key, Value>>>) range -> {
+                            try {
+                                Scanner scanner = connector.createScanner(table, authorizations);
+                                scanner.setRange(range);
+                                fillScanner(scanner, fcontext, null, ttl, null, tripleRowRegex, fconf);
+                                return scanner;
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
                             }
                         }).transform(keyValueToRyaStatementFunctionMap.get(layout));
 
@@ -410,8 +402,90 @@ public class AccumuloRyaQueryEngine implements RyaQueryEngine<AccumuloRdfConfigu
         }
     }
 
-    protected void fillScanner(ScannerBase scanner, RyaIRI context, String qualifier, Long ttl, Long currentTime,
-            TripleRowRegex tripleRowRegex, RdfCloudTripleStoreConfiguration conf) throws IOException {
+    @Override
+    public CloseableIterable<RyaStatement> queryAdjacentSubjects(final List<RyaIRI> iris, final int numThreads)
+            throws RyaDAOException {
+        try {
+            iris.sort(Comparator.comparing(RyaType::getData));
+
+            Range range = RangeUtils.createRange(iris, null, null);
+
+            return _queryAdjacentSubjects(iris, range, PropertyFunction.INCLUDING, Collections.emptyList(),
+                    null, null, numThreads);
+        } catch (Exception ex) {
+            throw new RyaDAOException(ex);
+        }
+    }
+
+    @Override
+    public CloseableIterable<RyaStatement> queryAdjacentSubjects(
+            final List<RyaIRI> iris, final PropertyFunction propertyFunction, final Collection<RyaIRI> properties,
+            final int numThreads
+    ) throws RyaDAOException {
+        try {
+            if (!properties.isEmpty()) {
+                RyaIRI startProperty = properties.parallelStream()
+                        .min(Comparator.comparing(RyaType::getData))
+                        .orElseThrow(IllegalArgumentException::new);
+                RyaIRI endProperty = properties.parallelStream()
+                        .max(Comparator.comparing(RyaType::getData))
+                        .orElseThrow(IllegalArgumentException::new);
+
+                iris.sort(Comparator.comparing(RyaType::getData));
+
+                Range range = RangeUtils.createRange(iris, startProperty, endProperty);
+
+                return _queryAdjacentSubjects(
+                        iris, range, propertyFunction, properties, startProperty, endProperty, numThreads);
+            } else {
+                return queryAdjacentSubjects(iris, numThreads);
+            }
+        } catch (Exception ex) {
+            throw new RyaDAOException(ex);
+        }
+    }
+
+    private CloseableIterable<RyaStatement> _queryAdjacentSubjects(
+            final Collection<RyaIRI> subjects, final Range range, final PropertyFunction propertyFunction,
+            final Collection<RyaIRI> properties, final RyaIRI startProperty, final RyaIRI endProperty,
+            final int numThreads
+    ) throws TableNotFoundException, AccumuloSecurityException, AccumuloException {
+        int numSplits = connector.tableOperations().listSplits(configuration.getTableLayoutStrategy().getSpo()).size();
+        Set<Range> ranges = connector.tableOperations()
+                .splitRangeByTablets(configuration.getTableLayoutStrategy().getSpo(), range, numSplits);
+        try (final BatchScanner scanner = connector.createBatchScanner(
+                configuration.getTableLayoutStrategy().getSpo(), Authorizations.EMPTY, numThreads)) {
+            scanner.setRanges(ranges);
+
+            IteratorSetting iteratorSetting = new IteratorSetting(1000, AdjacentSubjectsIterator.class);
+            iteratorSetting.addOption(AdjacentSubjectsIterator.SUBJECTS,
+                    subjects.parallelStream()
+                            .map(RyaType::getData)
+                            .collect(Collectors.joining(AdjacentSubjectsIterator.ARRAY_DELIMITER)));
+            iteratorSetting.addOption(AdjacentSubjectsIterator.PROPERTY_FUNCTION, propertyFunction.name());
+            iteratorSetting.addOption(
+                    AdjacentSubjectsIterator.PROPERTIES,
+                    properties.parallelStream()
+                            .map(RyaType::getData)
+                            .collect(Collectors.joining(AdjacentSubjectsIterator.ARRAY_DELIMITER)));
+            if (startProperty != null) {
+                iteratorSetting.addOption(AdjacentSubjectsIterator.START_PROPERTY, startProperty.getData());
+            }
+            if (endProperty != null) {
+                iteratorSetting.addOption(AdjacentSubjectsIterator.END_PROPERTY, endProperty.getData());
+            }
+
+            scanner.addScanIterator(iteratorSetting);
+
+            return CloseableIterables.wrap(StreamSupport
+                    .stream(new ScannerBaseCloseableIterable(scanner).spliterator(), true)
+                    .map(keyValueToRyaStatementFunctionMap.get(TABLE_LAYOUT.SPO)::apply)
+                    .collect(Collectors.toList()));
+        }
+    }
+
+    private void fillScanner(ScannerBase scanner, RyaIRI context, String qualifier, Long ttl, Long currentTime,
+                             TripleRowRegex tripleRowRegex, RdfCloudTripleStoreConfiguration conf) throws IOException {
         if (context != null && qualifier != null) {
             scanner.fetchColumn(new Text(context.getData()), new Text(qualifier));
         } else if (context != null) {

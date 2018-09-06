@@ -8,9 +8,9 @@ package org.apache.rya.api.persist.query;
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -19,17 +19,19 @@ package org.apache.rya.api.persist.query;
  * under the License.
  */
 
-import java.io.Closeable;
-import java.util.Collection;
-import java.util.Map;
-
 import org.apache.rya.api.RdfCloudTripleStoreConfiguration;
+import org.apache.rya.api.domain.RyaIRI;
 import org.apache.rya.api.domain.RyaStatement;
 import org.apache.rya.api.persist.RyaConfigured;
 import org.apache.rya.api.persist.RyaDAOException;
 import org.calrissian.mango.collect.CloseableIterable;
 import org.eclipse.rdf4j.common.iteration.CloseableIteration;
 import org.eclipse.rdf4j.query.BindingSet;
+
+import java.io.Closeable;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Rya Query Engine to perform queries against the Rya triple store.
@@ -38,6 +40,8 @@ import org.eclipse.rdf4j.query.BindingSet;
  * Time: 8:25 AM
  */
 public interface RyaQueryEngine<C extends RdfCloudTripleStoreConfiguration> extends RyaConfigured<C>, Closeable {
+
+    public enum PropertyFunction {INCLUDING, EXCLUDING}
 
     /**
      * Query the Rya store using the RyaStatement. The Configuration object provides information such as auths, ttl, etc
@@ -70,7 +74,8 @@ public interface RyaQueryEngine<C extends RdfCloudTripleStoreConfiguration> exte
      * @throws RyaDAOException
      * @deprecated
      */
-    public CloseableIteration<RyaStatement, RyaDAOException> batchQuery(Collection<RyaStatement> stmts, C conf) throws RyaDAOException;
+    public CloseableIteration<RyaStatement, RyaDAOException> batchQuery(Collection<RyaStatement> stmts, C conf)
+            throws RyaDAOException;
 
     /**
      * Query with a {@link} RyaQuery. A single query that will return a {@link CloseableIterable} of RyaStatements
@@ -89,5 +94,13 @@ public interface RyaQueryEngine<C extends RdfCloudTripleStoreConfiguration> exte
      * @throws RyaDAOException
      */
     public CloseableIterable<RyaStatement> query(BatchRyaQuery batchRyaQuery) throws RyaDAOException;
+
+    CloseableIterable<RyaStatement> queryAdjacentSubjects(final List<RyaIRI> iris, final int numThreads)
+            throws RyaDAOException;
+
+    CloseableIterable<RyaStatement> queryAdjacentSubjects(
+            final List<RyaIRI> iris, final PropertyFunction propertyFunction, final Collection<RyaIRI> properties,
+            final int numThreads
+    ) throws RyaDAOException;
 
 }

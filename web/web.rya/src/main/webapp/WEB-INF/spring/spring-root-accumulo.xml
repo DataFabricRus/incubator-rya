@@ -62,7 +62,11 @@ under the License.
         <property name="conf" ref="conf"/>
 	</bean>
 
-	<bean id="sailRepo" class="org.apache.rya.rdftriplestore.RyaSailRepository" init-method="initialize" destroy-method="shutDown">
+    <bean id="gmSail" class="org.apache.rya.rdftriplestore.graphmining.GraphMiningSail">
         <constructor-arg ref="rts"/>
+    </bean>
+
+	<bean id="sailRepo" class="org.apache.rya.rdftriplestore.RyaSailRepository" init-method="initialize" destroy-method="shutDown">
+        <constructor-arg ref="gmSail"/>
 	</bean>
 </beans>

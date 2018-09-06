@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -18,17 +18,12 @@
  */
 package org.apache.rya.mongodb;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.io.IOException;
-import java.util.AbstractMap;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-
+import com.google.common.base.Preconditions;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import org.apache.rya.api.domain.RyaIRI;
 import org.apache.rya.api.domain.RyaStatement;
 import org.apache.rya.api.persist.RyaDAOException;
 import org.apache.rya.api.persist.query.BatchRyaQuery;
@@ -45,11 +40,11 @@ import org.eclipse.rdf4j.common.iteration.CloseableIteration;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.impl.MapBindingSet;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
+import java.io.IOException;
+import java.util.*;
+import java.util.Map.Entry;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Date: 7/17/12
@@ -110,6 +105,7 @@ public class MongoDBQueryEngine implements RyaQueryEngine<StatefulMongoDBRdfConf
         }
 
     }
+
     @Override
     public CloseableIteration<RyaStatement, RyaDAOException> batchQuery(
             final Collection<RyaStatement> stmts, final StatefulMongoDBRdfConfiguration conf)
@@ -144,6 +140,18 @@ public class MongoDBQueryEngine implements RyaQueryEngine<StatefulMongoDBRdfConf
 
         Iterator<RyaStatement> iterator = new RyaStatementCursorIterator(queryWithBindingSet(queries.entrySet(), getConf()));
         return CloseableIterables.wrap(() -> iterator);
+    }
+
+    @Override
+    public CloseableIterable<RyaStatement> queryAdjacentSubjects(Collection<RyaIRI> iris) throws RyaDAOException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public CloseableIterable<RyaStatement> queryAdjacentSubjects(
+            Collection<RyaIRI> iris, PropertyFunction propertyFunction, Collection<RyaIRI> properties)
+            throws RyaDAOException {
+        throw new UnsupportedOperationException();
     }
 
     private MongoCollection<Document> getCollection(final StatefulMongoDBRdfConfiguration conf) {

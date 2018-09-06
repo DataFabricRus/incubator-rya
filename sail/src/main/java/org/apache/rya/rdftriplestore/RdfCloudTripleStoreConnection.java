@@ -107,8 +107,7 @@ public class RdfCloudTripleStoreConnection<C extends RdfCloudTripleStoreConfigur
     private InferenceEngine inferenceEngine;
     private NamespaceManager namespaceManager;
     private final C conf;
-
-
+    
     private ProvenanceCollector provenanceCollector;
 
     public RdfCloudTripleStoreConnection(final RdfCloudTripleStore<C> sailBase, final C conf, final ValueFactory vf)
@@ -173,9 +172,6 @@ public class RdfCloudTripleStoreConnection<C extends RdfCloudTripleStoreConfigur
             throw new SailException(e);
         }
     }
-
-
-
 
     @Override
     protected void clearInternal(final Resource... aresource) throws SailException {
@@ -404,7 +400,7 @@ public class RdfCloudTripleStoreConnection<C extends RdfCloudTripleStoreConfigur
 
             final CloseableIteration<BindingSet, QueryEvaluationException> iter = strategy
                     .evaluate(tupleExpr, EmptyBindingSet.getInstance());
-            final CloseableIteration<BindingSet, QueryEvaluationException> iterWrap = new CloseableIteration<BindingSet, QueryEvaluationException>() {
+            return new CloseableIteration<BindingSet, QueryEvaluationException>() {
 
                 @Override
                 public void remove() throws QueryEvaluationException {
@@ -427,7 +423,6 @@ public class RdfCloudTripleStoreConnection<C extends RdfCloudTripleStoreConfigur
                     strategy.shutdown();
                 }
             };
-            return iterWrap;
         } catch (final QueryEvaluationException e) {
             throw new SailException(e);
         } catch (final Exception e) {

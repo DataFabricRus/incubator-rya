@@ -35,6 +35,10 @@ under the License.
             <groupId>org.apache.rya</groupId>
             <artifactId>rya.api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.rya</groupId>
+            <artifactId>accumulo.iterators</artifactId>
+        </dependency>
         
         <!-- Accumulo deps -->
         <dependency>
