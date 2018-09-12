@@ -18,12 +18,8 @@
  */
 package org.apache.rya.mongodb.iter;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.log4j.Logger;
@@ -38,7 +34,6 @@ import org.eclipse.rdf4j.common.iteration.CloseableIteration;
 import org.eclipse.rdf4j.query.BindingSet;
 
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
 import com.mongodb.DBObject;
 import com.mongodb.client.AggregateIterable;
@@ -152,7 +147,7 @@ public class RyaStatementBindingSetCursorIterator implements CloseableIteration<
         } else if (match.size() == 1) {
             pipeline.add(new Document("$match", match.get(0)));
         } else {
-            batchQueryResultsIterator = Iterators.emptyIterator();
+            batchQueryResultsIterator = Collections.emptyIterator();
             return;
         }
 

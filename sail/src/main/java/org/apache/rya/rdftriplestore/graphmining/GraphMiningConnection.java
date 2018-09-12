@@ -31,7 +31,8 @@ import org.eclipse.rdf4j.query.QueryEvaluationException;
 import org.eclipse.rdf4j.query.algebra.BindingSetAssignment;
 import org.eclipse.rdf4j.query.algebra.Join;
 import org.eclipse.rdf4j.query.algebra.TupleExpr;
-import org.eclipse.rdf4j.sail.SailConnection;
+import org.eclipse.rdf4j.sail.NotifyingSailConnection;
+import org.eclipse.rdf4j.sail.SailConnectionListener;
 import org.eclipse.rdf4j.sail.SailException;
 import org.eclipse.rdf4j.sail.helpers.NotifyingSailConnectionWrapper;
 import org.eclipse.rdf4j.sail.helpers.SailConnectionWrapper;
@@ -40,7 +41,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
-public class GraphMiningConnection<C extends RdfCloudTripleStoreConfiguration> extends SailConnectionWrapper {
+public class GraphMiningConnection<C extends RdfCloudTripleStoreConfiguration>
+        extends SailConnectionWrapper implements NotifyingSailConnection {
 
     private final GraphMiningQueryEngine<C> gmqEngine;
 
@@ -49,13 +51,13 @@ public class GraphMiningConnection<C extends RdfCloudTripleStoreConfiguration> e
      *
      * @param wrappedCon
      */
-    public GraphMiningConnection(final SailConnection wrappedCon) {
+    public GraphMiningConnection(final NotifyingSailConnection wrappedCon) {
         super(wrappedCon);
 
         throw new IllegalArgumentException("Only RdfCloudTripleStoreConnection as the wrapped connection is supported!");
     }
 
-    public GraphMiningConnection(final RdfCloudTripleStoreConnection wrappedCon, final RyaDAO<C> dao) {
+    public GraphMiningConnection(final RdfCloudTripleStoreConnection<C> wrappedCon, final RyaDAO<C> dao) {
         super(wrappedCon);
 
         this.gmqEngine = new GraphMiningQueryEngine<>(dao);
@@ -129,5 +131,15 @@ public class GraphMiningConnection<C extends RdfCloudTripleStoreConfiguration> e
         parser.validate();
 
         return parser.getQueries();
+    }
+
+    @Override
+    public void addConnectionListener(SailConnectionListener listener) {
+        ((NotifyingSailConnection) super.getWrappedConnection()).addConnectionListener(listener);
+    }
+
+    @Override
+    public void removeConnectionListener(SailConnectionListener listener) {
+        ((NotifyingSailConnection) super.getWrappedConnection()).removeConnectionListener(listener);
     }
 }

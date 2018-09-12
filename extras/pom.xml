@@ -34,41 +34,8 @@ under the License.
         <module>rya.prospector</module>
         <module>rya.manual</module>
         <module>periodic.notification</module>
-        <module>shell</module>
         <module>indexing</module>
         <module>rya.indexing.pcj</module>
-        <module>indexingExample</module>
-        <module>rya.reasoning</module>
-        <module>vagrantExample</module>
         <module>rya.pcj.fluo</module>
-        <module>rya.export</module>
-        <module>rya.merger</module>
-        <module>rya.streams</module>
-        <module>rya.forwardchain</module>
-        <module>kafka.connect</module>
     </modules>
-
-    <profiles>
-        <profile>
-            <!-- geoindexing has dependencies with incompatible licenses, end-user must build this optional module -->
-            <id>geoindexing</id>
-            <modules>
-                <module>rya.geoindexing</module>
-           </modules>
-        </profile>
-        <profile>
-            <!-- benchmark has dependencies with incompatible licenses, end-user must build this optional module -->
-            <id>benchmark</id>
-            <modules>
-                <module>rya.benchmark</module>
-           </modules>
-        </profile>
-        <profile>
-            <!-- giraph has dependencies with incompatible licenses, end-user must to build this optional module -->
-            <id>giraph</id>
-            <modules>
-                <module>rya.giraph</module>
-           </modules>
-        </profile>
-    </profiles>
 </project>

@@ -34,9 +34,5 @@
 
     <modules>
         <module>api</module>
-        <module>service</module>
-        <module>twill</module>
-        <module>twill.yarn</module>
-        <module>tests</module>
     </modules>
 </project>

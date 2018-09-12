@@ -60,6 +60,7 @@ import org.eclipse.rdf4j.common.iteration.CloseableIteration;
 import org.eclipse.rdf4j.query.BindingSet;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -163,7 +164,7 @@ public class AccumuloRyaQueryEngine implements RyaQueryEngine<AccumuloRdfConfigu
                 // graphs by requiring that Statements have same context Value
                 // as the Value specified in the BindingSet
                 if (context != null) {
-                    byte[] contextBytes = context.getData().getBytes("UTF-8");
+                    byte[] contextBytes = context.getData().getBytes(StandardCharsets.UTF_8);
                     rangeMapRange = range.bound(new Column(contextBytes, new byte[]{(byte) 0x00}, new byte[]{(byte) 0x00}),
                             new Column(contextBytes, new byte[]{(byte) 0xff}, new byte[]{(byte) 0xff}));
                 }
@@ -403,15 +404,14 @@ public class AccumuloRyaQueryEngine implements RyaQueryEngine<AccumuloRdfConfigu
     }
 
     @Override
-    public CloseableIterable<RyaStatement> queryAdjacentSubjects(final List<RyaIRI> iris, final int numThreads)
+    public CloseableIterable<RyaStatement> queryAdjacentSubjects(final List<RyaIRI> iris, final int maxNumThreads)
             throws RyaDAOException {
         try {
-            iris.sort(Comparator.comparing(RyaType::getData));
+            Set<Range> ranges = iris.parallelStream()
+                    .map(it -> RangeUtils.createRange(it, null, null))
+                    .collect(Collectors.toSet());
 
-            Range range = RangeUtils.createRange(iris, null, null);
-
-            return _queryAdjacentSubjects(iris, range, PropertyFunction.INCLUDING, Collections.emptyList(),
-                    null, null, numThreads);
+            return _queryAdjacentSubjects(ranges, PropertyFunction.INCLUDING, Collections.emptyList(), maxNumThreads);
         } catch (Exception ex) {
             throw new RyaDAOException(ex);
         }
@@ -420,25 +420,24 @@ public class AccumuloRyaQueryEngine implements RyaQueryEngine<AccumuloRdfConfigu
     @Override
     public CloseableIterable<RyaStatement> queryAdjacentSubjects(
             final List<RyaIRI> iris, final PropertyFunction propertyFunction, final Collection<RyaIRI> properties,
-            final int numThreads
+            final int maxNumThreads
     ) throws RyaDAOException {
         try {
             if (!properties.isEmpty()) {
-                RyaIRI startProperty = properties.parallelStream()
+                final RyaIRI startProperty = properties.parallelStream()
                         .min(Comparator.comparing(RyaType::getData))
                         .orElseThrow(IllegalArgumentException::new);
-                RyaIRI endProperty = properties.parallelStream()
+                final RyaIRI endProperty = properties.parallelStream()
                         .max(Comparator.comparing(RyaType::getData))
                         .orElseThrow(IllegalArgumentException::new);
 
-                iris.sort(Comparator.comparing(RyaType::getData));
+                final Set<Range> ranges = iris.parallelStream()
+                        .map(it -> RangeUtils.createRange(it, startProperty, endProperty))
+                        .collect(Collectors.toSet());
 
-                Range range = RangeUtils.createRange(iris, startProperty, endProperty);
-
-                return _queryAdjacentSubjects(
-                        iris, range, propertyFunction, properties, startProperty, endProperty, numThreads);
+                return _queryAdjacentSubjects(ranges, propertyFunction, properties, maxNumThreads);
             } else {
-                return queryAdjacentSubjects(iris, numThreads);
+                return queryAdjacentSubjects(iris, maxNumThreads);
             }
         } catch (Exception ex) {
             throw new RyaDAOException(ex);
@@ -446,34 +445,21 @@ public class AccumuloRyaQueryEngine implements RyaQueryEngine<AccumuloRdfConfigu
     }
 
     private CloseableIterable<RyaStatement> _queryAdjacentSubjects(
-            final Collection<RyaIRI> subjects, final Range range, final PropertyFunction propertyFunction,
-            final Collection<RyaIRI> properties, final RyaIRI startProperty, final RyaIRI endProperty,
-            final int numThreads
-    ) throws TableNotFoundException, AccumuloSecurityException, AccumuloException {
-        int numSplits = connector.tableOperations().listSplits(configuration.getTableLayoutStrategy().getSpo()).size();
-        Set<Range> ranges = connector.tableOperations()
-                .splitRangeByTablets(configuration.getTableLayoutStrategy().getSpo(), range, numSplits);
+            final Collection<Range> ranges, final PropertyFunction propertyFunction, final Collection<RyaIRI> properties,
+            final int maxNumThreads
+    ) throws TableNotFoundException {
+        int numThreads = Math.min(ranges.size(), maxNumThreads);
         try (final BatchScanner scanner = connector.createBatchScanner(
                 configuration.getTableLayoutStrategy().getSpo(), Authorizations.EMPTY, numThreads)) {
             scanner.setRanges(ranges);
 
             IteratorSetting iteratorSetting = new IteratorSetting(1000, AdjacentSubjectsIterator.class);
-            iteratorSetting.addOption(AdjacentSubjectsIterator.SUBJECTS,
-                    subjects.parallelStream()
-                            .map(RyaType::getData)
-                            .collect(Collectors.joining(AdjacentSubjectsIterator.ARRAY_DELIMITER)));
             iteratorSetting.addOption(AdjacentSubjectsIterator.PROPERTY_FUNCTION, propertyFunction.name());
             iteratorSetting.addOption(
                     AdjacentSubjectsIterator.PROPERTIES,
                     properties.parallelStream()
                             .map(RyaType::getData)
                             .collect(Collectors.joining(AdjacentSubjectsIterator.ARRAY_DELIMITER)));
-            if (startProperty != null) {
-                iteratorSetting.addOption(AdjacentSubjectsIterator.START_PROPERTY, startProperty.getData());
-            }
-            if (endProperty != null) {
-                iteratorSetting.addOption(AdjacentSubjectsIterator.END_PROPERTY, endProperty.getData());
-            }
 
             scanner.addScanIterator(iteratorSetting);
 
@@ -530,6 +516,6 @@ public class AccumuloRyaQueryEngine implements RyaQueryEngine<AccumuloRdfConfigu
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
     }
 }

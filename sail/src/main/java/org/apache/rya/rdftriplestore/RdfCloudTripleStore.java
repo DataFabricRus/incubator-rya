@@ -30,11 +30,11 @@ import org.apache.rya.rdftriplestore.namespace.NamespaceManager;
 import org.apache.rya.rdftriplestore.provenance.ProvenanceCollector;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
-import org.eclipse.rdf4j.sail.SailConnection;
-import org.eclipse.rdf4j.sail.SailException;
+import org.eclipse.rdf4j.sail.*;
 import org.eclipse.rdf4j.sail.helpers.AbstractSail;
 
-public class RdfCloudTripleStore<C extends RdfCloudTripleStoreConfiguration> extends AbstractSail {
+public class RdfCloudTripleStore<C extends RdfCloudTripleStoreConfiguration>
+        extends AbstractSail implements NotifyingSail {
 
     private C conf;
 
@@ -49,7 +49,7 @@ public class RdfCloudTripleStore<C extends RdfCloudTripleStoreConfiguration> ext
 
     @Override
     protected SailConnection getConnectionInternal() throws SailException {
-        return new RdfCloudTripleStoreConnection(this, conf, VF);
+        return new RdfCloudTripleStoreConnection<>(this, conf, VF);
     }
 
     @Override
@@ -166,4 +166,18 @@ public class RdfCloudTripleStore<C extends RdfCloudTripleStoreConfiguration> ext
         this.provenanceCollector = provenanceCollector;
     }
 
+    @Override
+    public NotifyingSailConnection getConnection() throws SailException {
+        return new RdfCloudTripleStoreConnection<>(this, conf, VF);
+    }
+
+    @Override
+    public void addSailChangedListener(SailChangedListener listener) {
+
+    }
+
+    @Override
+    public void removeSailChangedListener(SailChangedListener listener) {
+
+    }
 }

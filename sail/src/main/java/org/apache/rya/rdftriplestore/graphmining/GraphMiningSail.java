@@ -22,12 +22,10 @@ import org.apache.rya.api.RdfCloudTripleStoreConfiguration;
 import org.apache.rya.rdftriplestore.RdfCloudTripleStore;
 import org.apache.rya.rdftriplestore.RdfCloudTripleStoreConnection;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.sail.Sail;
-import org.eclipse.rdf4j.sail.SailConnection;
-import org.eclipse.rdf4j.sail.SailException;
+import org.eclipse.rdf4j.sail.*;
 import org.eclipse.rdf4j.sail.helpers.AbstractSail;
 
-public class GraphMiningSail<C extends RdfCloudTripleStoreConfiguration> extends AbstractSail {
+public class GraphMiningSail<C extends RdfCloudTripleStoreConfiguration> extends AbstractSail implements NotifyingSail {
 
     private final RdfCloudTripleStore<C> parentSail;
 
@@ -64,6 +62,21 @@ public class GraphMiningSail<C extends RdfCloudTripleStoreConfiguration> extends
     @Override
     protected SailConnection getConnectionInternal() throws SailException {
         return new GraphMiningConnection<>(
-                (RdfCloudTripleStoreConnection) parentSail.getConnection(), parentSail.getRyaDAO());
+                (RdfCloudTripleStoreConnection<C>) parentSail.getConnection(), parentSail.getRyaDAO());
+    }
+
+    @Override
+    public NotifyingSailConnection getConnection() throws SailException {
+        return (NotifyingSailConnection) getConnectionInternal();
+    }
+
+    @Override
+    public void addSailChangedListener(SailChangedListener listener) {
+        parentSail.addSailChangedListener(listener);
+    }
+
+    @Override
+    public void removeSailChangedListener(SailChangedListener listener) {
+        parentSail.removeSailChangedListener(listener);
     }
 }

@@ -28,7 +28,6 @@ import org.calrissian.mango.collect.CloseableIterable;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.query.BindingSet;
-import org.eclipse.rdf4j.query.impl.EmptyBindingSet;
 import org.eclipse.rdf4j.query.impl.MapBindingSet;
 import org.jetbrains.annotations.NotNull;
 import org.mapdb.*;
@@ -136,8 +135,8 @@ public class GraphMiningQueryEngine<C extends RdfCloudTripleStoreConfiguration> 
                 currentDepth++;
 
                 long start = System.currentTimeMillis();
-                CloseableIterable<RyaStatement> adjacentVertices = dao.getQueryEngine()
-                        .queryAdjacentSubjects(frontier, query.getPropertyFunction(), query.getProperties());
+                CloseableIterable<RyaStatement> adjacentVertices = dao.getQueryEngine().queryAdjacentSubjects(
+                        frontier, query.getPropertyFunction(), query.getProperties(), query.getMaxNumThreads());
 
                 LOG.debug("Depth #{}. Search took {} ms", currentDepth, System.currentTimeMillis() - start);
 

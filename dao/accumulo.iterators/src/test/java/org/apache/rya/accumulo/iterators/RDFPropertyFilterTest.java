@@ -28,11 +28,9 @@ import org.apache.accumulo.iteratortest.junit4.BaseJUnit4IteratorTest;
 import org.apache.accumulo.iteratortest.testcases.IteratorTestCase;
 import org.apache.rya.api.domain.RyaIRI;
 import org.apache.rya.api.domain.RyaStatement;
-import org.apache.rya.api.domain.RyaType;
 import org.apache.rya.api.persist.query.RyaQueryEngine;
 import org.apache.rya.api.resolver.triple.TripleRowResolverException;
 import org.apache.rya.api.resolver.triple.impl.WholeRowTripleResolver;
-import org.eclipse.rdf4j.model.vocabulary.XMLSchema;
 import org.junit.runners.Parameterized;
 
 import java.util.HashMap;
@@ -42,9 +40,9 @@ import java.util.TreeMap;
 
 import static org.apache.rya.accumulo.iterators.IteratorTestHelper.put;
 
-public class AdjacentSubjectsIteratorTest extends BaseJUnit4IteratorTest {
+public class RDFPropertyFilterTest extends BaseJUnit4IteratorTest {
 
-    public AdjacentSubjectsIteratorTest(IteratorTestInput input, IteratorTestOutput expectedOutput, IteratorTestCase testCase) {
+    public RDFPropertyFilterTest(IteratorTestInput input, IteratorTestOutput expectedOutput, IteratorTestCase testCase) {
         super(input, expectedOutput, testCase);
     }
 
@@ -60,15 +58,7 @@ public class AdjacentSubjectsIteratorTest extends BaseJUnit4IteratorTest {
         TreeMap<Key, Value> data = new TreeMap<>();
         WholeRowTripleResolver resolver = new WholeRowTripleResolver();
         put(data, resolver, new RyaStatement(
-                new RyaIRI("urn:a1"), new RyaIRI("urn:relatedTo"), new RyaType("mydata1")));
-        put(data, resolver, new RyaStatement(
                 new RyaIRI("urn:a1"), new RyaIRI("urn:relatedTo"), new RyaIRI("urn:b1")));
-        put(data, resolver, new RyaStatement(
-                new RyaIRI("urn:b1"), new RyaIRI("urn:relatedTo"), new RyaIRI("urn:c")));
-        put(data, resolver, new RyaStatement(
-                new RyaIRI("urn:b1"), new RyaIRI("urn:gem#pred"), new RyaIRI("urn:c")));
-        put(data, resolver, new RyaStatement(
-                new RyaIRI("urn:b1"), new RyaIRI("urn:gem#pred"), new RyaType(XMLSchema.INTEGER, "12")));
         put(data, resolver, new RyaStatement(
                 new RyaIRI("urn:b2"), new RyaIRI("urn:gem#pred"), new RyaIRI("urn:c")));
         return data;
@@ -79,17 +69,14 @@ public class AdjacentSubjectsIteratorTest extends BaseJUnit4IteratorTest {
         WholeRowTripleResolver resolver = new WholeRowTripleResolver();
         put(data, resolver, new RyaStatement(
                 new RyaIRI("urn:a1"), new RyaIRI("urn:relatedTo"), new RyaIRI("urn:b1")));
-        put(data, resolver, new RyaStatement(
-                new RyaIRI("urn:b1"), new RyaIRI("urn:relatedTo"), new RyaIRI("urn:c")));
         return data;
     }
 
     private static IteratorTestInput createIteratorInput() throws TripleRowResolverException {
         Map<String, String> options = new HashMap<>();
-        options.put(AdjacentSubjectsIterator.PROPERTIES, "urn:relatedTo");
-        options.put(AdjacentSubjectsIterator.PROPERTY_FUNCTION, RyaQueryEngine.PropertyFunction.INCLUDING.name());
+        options.put(RDFPropertyFilter.OPTION_PROPERTIES, "urn:relatedTo");
 
-        return new IteratorTestInput(AdjacentSubjectsIterator.class, options, new Range(), createInputData());
+        return new IteratorTestInput(RDFPropertyFilter.class, options, new Range(), createInputData());
     }
 
     private static IteratorTestOutput createIteratorOutput() throws TripleRowResolverException {

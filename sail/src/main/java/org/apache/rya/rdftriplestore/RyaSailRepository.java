@@ -32,7 +32,7 @@ import org.eclipse.rdf4j.sail.SailException;
  * Time: 10:05 AM
  * To change this template use File | Settings | File Templates.
  */
-public class RyaSailRepository extends SailRepository{
+public class RyaSailRepository extends SailRepository {
     public RyaSailRepository(Sail sail) {
         super(sail);
     }

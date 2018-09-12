@@ -48,7 +48,7 @@ class GraphMiningQuery {
     public static final IRI PREDICATE_EXCLUDING_PROPERTY = VF.createIRI(NAMESPACE, "excludingProperty");
     public static final IRI PREDICATE_LINKING_PROPERTY = VF.createIRI(NAMESPACE, "linkingProperty");
     public static final IRI PREDICATE_MAX_VISITED = VF.createIRI(NAMESPACE, "maxVisited");
-    public static final IRI PREDICATE_NUM_THREADS = VF.createIRI(NAMESPACE, "numThreads");
+    public static final IRI PREDICATE_NUM_THREADS = VF.createIRI(NAMESPACE, "maxNumThreads");
 
     public static final List<IRI> PREDICATE_PARAMETERS = Arrays.asList(
             PREDICATE_TARGET, PREDICATE_MAX_VISITED, PREDICATE_INCLUDING_PROPERTY, PREDICATE_MEDIUM, PREDICATE_DEPTH,
@@ -64,7 +64,7 @@ class GraphMiningQuery {
     private RyaQueryEngine.PropertyFunction propertyFunction;
     private List<RyaIRI> properties;
     private long maxVisited = 10000;
-    private int numThreads = 1;
+    private int maxNumThreads = 1;
 
     GraphMiningQuery() {
         this.properties = new ArrayList<>();
@@ -88,6 +88,10 @@ class GraphMiningQuery {
 
     long getMaxVisited() {
         return maxVisited;
+    }
+
+    int getMaxNumThreads() {
+        return maxNumThreads;
     }
 
     Set<String> getBindingNames() {
@@ -145,7 +149,7 @@ class GraphMiningQuery {
         }
         if (parameter.equals(PREDICATE_NUM_THREADS)) {
             if (value instanceof SimpleLiteral) {
-                numThreads = ((SimpleLiteral) value).intValue();
+                maxNumThreads = ((SimpleLiteral) value).intValue();
                 return;
             }
         }

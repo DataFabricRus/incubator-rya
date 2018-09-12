@@ -24,6 +24,7 @@ import static org.apache.rya.indexing.pcj.fluo.app.IncrementalUpdateConstants.VA
 import static org.apache.rya.indexing.pcj.fluo.app.query.FluoQueryColumns.STATEMENT_PATTERN_IDS;
 import static org.apache.rya.indexing.pcj.fluo.app.query.FluoQueryColumns.STATEMENT_PATTERN_IDS_HASH;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -62,7 +63,8 @@ public class StatementPatternIdManager {
         }
         String idString = builder.append(Joiner.on(VAR_DELIM).join(ids)).toString();
         tx.set(Bytes.of(STATEMENT_PATTERN_ID), STATEMENT_PATTERN_IDS, Bytes.of(idString));
-        tx.set(Bytes.of(STATEMENT_PATTERN_ID), STATEMENT_PATTERN_IDS_HASH, Bytes.of(Hashing.sha256().hashString(idString).toString()));
+        tx.set(Bytes.of(STATEMENT_PATTERN_ID), STATEMENT_PATTERN_IDS_HASH,
+                Bytes.of(Hashing.sha256().hashString(idString, StandardCharsets.UTF_8).toString()));
     }
 
     /**
@@ -84,7 +86,8 @@ public class StatementPatternIdManager {
         storedIds.removeAll(ids);
         String idString = Joiner.on(VAR_DELIM).join(ids);
         tx.set(Bytes.of(STATEMENT_PATTERN_ID), STATEMENT_PATTERN_IDS, Bytes.of(idString));
-        tx.set(Bytes.of(STATEMENT_PATTERN_ID), STATEMENT_PATTERN_IDS_HASH, Bytes.of(Hashing.sha256().hashString(idString).toString()));
+        tx.set(Bytes.of(STATEMENT_PATTERN_ID), STATEMENT_PATTERN_IDS_HASH,
+                Bytes.of(Hashing.sha256().hashString(idString, StandardCharsets.UTF_8).toString()));
     }
 
 }

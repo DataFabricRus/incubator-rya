@@ -46,7 +46,7 @@ import org.slf4j.LoggerFactory;
 /**
  * An ${@link org.apache.rya.api.persist.RdfEvalStatsDAO} that uses the Prospector Service underneath return counts.
  */
-public class ProspectorServiceEvalStatsDAO implements RdfEvalStatsDAO<RdfCloudTripleStoreConfiguration> {
+public class ProspectorServiceEvalStatsDAO<T extends RdfCloudTripleStoreConfiguration> implements RdfEvalStatsDAO<T> {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProspectorServiceEvalStatsDAO.class);
 
@@ -94,7 +94,7 @@ public class ProspectorServiceEvalStatsDAO implements RdfEvalStatsDAO<RdfCloudTr
     }
 
     @Override
-    public double getCardinality(RdfCloudTripleStoreConfiguration conf, CARDINALITY_OF card, List<Value> val) throws RdfDAOException {
+    public double getCardinality(T conf, CARDINALITY_OF card, List<Value> val) throws RdfDAOException {
         assert conf != null && card != null && val != null;
 
         String triplePart = null;
@@ -142,16 +142,16 @@ public class ProspectorServiceEvalStatsDAO implements RdfEvalStatsDAO<RdfCloudTr
     }
 
     @Override
-    public double getCardinality(RdfCloudTripleStoreConfiguration conf, CARDINALITY_OF card, List<Value> val, Resource context) {
+    public double getCardinality(T conf, CARDINALITY_OF card, List<Value> val, Resource context) {
         return getCardinality(conf, card, val); //TODO: Not sure about the context yet
     }
 
     @Override
-    public void setConf(RdfCloudTripleStoreConfiguration conf) {
+    public void setConf(T conf) {
     }
 
     @Override
-    public RdfCloudTripleStoreConfiguration getConf() {
+    public T getConf() {
         return null;
     }
 

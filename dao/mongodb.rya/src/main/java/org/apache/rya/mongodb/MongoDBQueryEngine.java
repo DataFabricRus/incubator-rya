@@ -143,13 +143,14 @@ public class MongoDBQueryEngine implements RyaQueryEngine<StatefulMongoDBRdfConf
     }
 
     @Override
-    public CloseableIterable<RyaStatement> queryAdjacentSubjects(Collection<RyaIRI> iris) throws RyaDAOException {
+    public CloseableIterable<RyaStatement> queryAdjacentSubjects(List<RyaIRI> iris, int maxNumThreads)
+            throws RyaDAOException {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public CloseableIterable<RyaStatement> queryAdjacentSubjects(
-            Collection<RyaIRI> iris, PropertyFunction propertyFunction, Collection<RyaIRI> properties)
+            List<RyaIRI> iris, PropertyFunction propertyFunction, Collection<RyaIRI> properties, int maxNumThreads)
             throws RyaDAOException {
         throw new UnsupportedOperationException();
     }

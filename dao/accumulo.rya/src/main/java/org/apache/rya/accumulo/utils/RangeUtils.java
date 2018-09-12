@@ -94,6 +94,38 @@ public class RangeUtils {
         return new Range(startKey == null ? null : new Key(startKey), stopKey == null ? null : new Key(stopKey));
     }
 
+    public static Range createRange(final RyaIRI subject, final RyaIRI startProperty, final RyaIRI endProperty) {
+        final byte[] startKey;
+        final byte[] stopKey;
+
+        if (subject != null) {
+            if (startProperty != null) {
+                startKey = Bytes.concat(
+                        subject.getData().getBytes(StandardCharsets.UTF_8),
+                        DELIM_BYTES,
+                        startProperty.getData().getBytes(StandardCharsets.UTF_8),
+                        DELIM_BYTES);
+            } else {
+                startKey = Bytes.concat(subject.getData().getBytes(StandardCharsets.UTF_8), DELIM_BYTES);
+            }
+            if (endProperty != null) {
+                stopKey = Bytes.concat(
+                        subject.getData().getBytes(StandardCharsets.UTF_8),
+                        DELIM_BYTES,
+                        endProperty.getData().getBytes(StandardCharsets.UTF_8),
+                        DELIM_BYTES,
+                        LAST_BYTES);
+            } else {
+                stopKey = Bytes.concat(subject.getData().getBytes(StandardCharsets.UTF_8), LAST_BYTES);
+            }
+        } else {
+            startKey = null;
+            stopKey = null;
+        }
+
+        return new Range(startKey == null ? null : new Key(startKey), stopKey == null ? null : new Key(stopKey));
+    }
+
     /**
      * @param subjects must be sorted by ascending
      * @return
