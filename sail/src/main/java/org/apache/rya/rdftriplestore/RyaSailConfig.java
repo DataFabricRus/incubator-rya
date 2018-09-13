@@ -26,9 +26,10 @@ import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.Models;
 import org.eclipse.rdf4j.repository.sail.config.SailRepositorySchema;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.config.AbstractSailImplConfig;
 import org.eclipse.rdf4j.sail.config.SailConfigException;
-import org.eclipse.rdf4j.sail.config.SailConfigSchema;
 
 import java.util.Optional;
 
@@ -76,34 +77,29 @@ public class RyaSailConfig extends AbstractSailImplConfig {
     @Override
     public void parse(Model m, Resource implNode) throws SailConfigException {
         super.parse(m, implNode);
-        ValueFactory vf = SimpleValueFactory.getInstance();
 
         accumuloConf = new AccumuloRdfConfiguration();
 
-        Optional<Resource> delegate = Models.subject(m.filter(null, SailConfigSchema.DELEGATE, implNode));
-        Optional<Resource> sailImpl = Models.subject(m.filter(null, SailRepositorySchema.SAILIMPL,
-                delegate.orElse(implNode)));
-        if (sailImpl.isPresent()) {
-            String accumuloInstanceName = Models.getPropertyString(m, sailImpl.get(), ACCUMULO_INSTANCE_NAME)
-                    .orElse(null);
-            accumuloConf.setAccumuloInstance(accumuloInstanceName);
+        String accumuloInstanceName = Models.getPropertyString(m, implNode, ACCUMULO_INSTANCE_NAME)
+                .orElse(null);
+        accumuloConf.setAccumuloInstance(accumuloInstanceName);
 
-            String accumuloUsername = Models.getPropertyString(m, sailImpl.get(), ACCUMULO_USERNAME).orElse(null);
-            accumuloConf.setAccumuloUser(accumuloUsername);
+        String accumuloUsername = Models.getPropertyString(m, implNode, ACCUMULO_USERNAME).orElse(null);
+        accumuloConf.setAccumuloUser(accumuloUsername);
 
-            String accumuloPassword = Models.getPropertyString(m, sailImpl.get(), ACCUMULO_PASSWORD).orElse(null);
-            accumuloConf.setAccumuloPassword(accumuloPassword);
+        String accumuloPassword = Models.getPropertyString(m, implNode, ACCUMULO_PASSWORD).orElse(null);
+        accumuloConf.setAccumuloPassword(accumuloPassword);
 
-            String accumuloZookeeperServers = Models.getPropertyString(m, sailImpl.get(), ACCUMULO_ZOOKEEPER_SERVERS)
-                    .orElse(null);
-            accumuloConf.setAccumuloZookeepers(accumuloZookeeperServers);
+        String accumuloZookeeperServers = Models.getPropertyString(m, implNode, ACCUMULO_ZOOKEEPER_SERVERS)
+                .orElse(null);
+        accumuloConf.setAccumuloZookeepers(accumuloZookeeperServers);
 
-            String tablePrefix = Models.getPropertyString(m, sailImpl.get(), TABLE_PREFIX)
-                    .orElse("triplestore_");
-            accumuloConf.setTablePrefix(tablePrefix);
+        String tablePrefix = Models.getPropertyString(m, implNode, TABLE_PREFIX).orElse("triplestore_");
+        accumuloConf.setTablePrefix(tablePrefix);
 
-            elasticsearchHost = Models.getPropertyString(m, sailImpl.get(), ELASTICSEARCH_HOST)
-                    .orElse(null);
+        elasticsearchHost = Models.getPropertyString(m, implNode, ELASTICSEARCH_HOST).orElse(null);
+        if (elasticsearchHost != null && elasticsearchHost.isEmpty()) {
+            elasticsearchHost = null;
         }
 
         accumuloConf.setDisplayQueryPlan(true);

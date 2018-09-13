@@ -88,7 +88,8 @@
                             <target>
                                 <zip destfile="${project.build.directory}/server.war" update="true">
                                     <zipfileset src="${project.build.directory}/rdf4j-server.war"
-                                                excludes="**/mapdb-*.jar"/>
+                                                excludes="**/mapdb-*.jar,**/WEB-INF/web.xml"/>
+                                    <fileset dir="src/main/resources/patches/rdf4j-server"/>
                                     <zipfileset dir="${project.build.directory}/dependencies" prefix="WEB-INF/lib"/>
                                     <zipfileset dir="${project.build.directory}" includes="json-20140107.jar"
                                                 prefix="WEB-INF/lib"/>
@@ -111,6 +112,14 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>8</source>
+                    <target>8</target>
+                </configuration>
             </plugin>
         </plugins>
 

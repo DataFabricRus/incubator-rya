@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app>
 
-    <display-name>RDF4J Workbench</display-name>
-    <description>RDF4J Workbench</description>
+    <display-name>Apache Rya Workbench</display-name>
+    <description>Apache Rya Workbench</description>
 
     <filter>
         <filter-name>redirect</filter-name>
@@ -93,7 +93,7 @@
         </init-param>
         <init-param>
             <param-name>default-infer</param-name>
-            <param-value>true</param-value>
+            <param-value>false</param-value>
         </init-param>
         <init-param>
             <param-name>default-Accept</param-name>

@@ -54,6 +54,13 @@
                         <td></td>
                     </tr>
                     <tr>
+                        <th>Accumulo Zookeeper Servers</th>
+                        <td>
+                            <input id="accumuloZookeeperServers" name="Accumulo Zookeeper Servers" size="48" value=""/>
+                        </td>
+                        <td></td>
+                    </tr>
+                    <tr>
                         <th>Accumulo Instance Name</th>
                         <td>
                             <input id="accumuloInstanceName" name="Accumulo Instance Name" size="48" value=""/>
@@ -75,9 +82,9 @@
                         <td></td>
                     </tr>
                     <tr>
-                        <th>ElasticSearch Host (optional)</th>
+                        <th>Elasticsearch Host (optional)</th>
                         <td>
-                            <input id="elasticsearchHost" name="ElasticSearch Host" size="48" value=""/>
+                            <input id="elasticsearchHost" name="Elasticsearch Host" size="48" value=""/>
                         </td>
                         <td></td>
                     </tr>
