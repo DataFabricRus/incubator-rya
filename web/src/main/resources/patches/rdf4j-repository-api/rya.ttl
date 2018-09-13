@@ -1,0 +1,26 @@
+#
+# RDF4J configuration template for a Apache Rya repository
+#
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix rep: <http://www.openrdf.org/config/repository#>.
+@prefix sr: <http://www.openrdf.org/config/repository/sail#>.
+@prefix sail: <http://www.openrdf.org/config/sail#>.
+@prefix rya: <http://rya.apache.org/sail#> .
+
+[] a rep:Repository ;
+   rep:repositoryID "{%Repository ID|%}" ;
+   rdfs:label "{%Repository title|%}" ;
+   rep:repositoryImpl [
+      rep:repositoryType "openrdf:SailRepository" ;
+      sr:sailImpl [
+         sail:sailType "openrdf:ApacheRyaStore" ;
+         rya:tablePrefix "{%Apache Rya Table Prefix|%}" ;
+
+         rya:accumuloInstanceName "{%Accumulo Instance Name|%}" ;
+         rya:accumuloUsername "{%Accumulo Username|%}" ;
+         rya:accumuloPassword "{%Accumulo Password|%}" ;
+         rya:accumuloZookeeperServers "{%Accumulo Zookeeper Servers|%}" ;
+
+         rya:elasticsearchHost "{%Elasticsearch Host|%}"
+      ]
+].
