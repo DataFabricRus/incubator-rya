@@ -19,6 +19,13 @@
             <groupId>org.apache.rya</groupId>
             <artifactId>rya.sail</artifactId>
         </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-to-slf4j</artifactId>
+            <version>2.11.1</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -88,7 +95,8 @@
                             <target>
                                 <zip destfile="${project.build.directory}/server.war" update="true">
                                     <zipfileset src="${project.build.directory}/rdf4j-server.war"
-                                                excludes="**/mapdb-*.jar,**/WEB-INF/web.xml"/>
+                                                excludes="**/mapdb-*.jar,**/WEB-INF/web.xml,
+                                                    **/slf4j-*.jar,**/jcl-over-slf4j-*.jar,**/logback.xml"/>
                                     <fileset dir="src/main/resources/patches/rdf4j-server"/>
                                     <zipfileset dir="${project.build.directory}/dependencies" prefix="WEB-INF/lib"/>
                                     <zipfileset dir="${project.build.directory}" includes="json-20140107.jar"
@@ -96,7 +104,8 @@
                                 </zip>
                                 <zip destfile="${project.build.directory}/workbench.war" update="true">
                                     <zipfileset src="${project.build.directory}/rdf4j-workbench.war"
-                                                excludes="**/mapdb-*.jar,**/transformations/create.xsl,**/WEB-INF/web.xml"/>
+                                                excludes="**/mapdb-*.jar,**/transformations/create.xsl,
+                                                    **/WEB-INF/web.xml,**/slf4j-*.jar,**/jcl-over-slf4j-*.jar"/>
                                     <fileset dir="src/main/resources/patches/rdf4j-workbench"/>
                                     <zipfileset dir="src/main/resources/patches/rdf4j-repository-api"
                                                 prefix="WEB-INF/classes/org/eclipse/rdf4j/repository/config/"/>
@@ -136,6 +145,7 @@
                             <exclude>**/*.nt</exclude>
                             <exclude>**/*.xsl</exclude>
                             <exclude>**/web.xml</exclude>
+                            <exclude>**/logback.xml</exclude>
                             <exclude>pom.xml</exclude>
                         </excludes>
                     </configuration>
