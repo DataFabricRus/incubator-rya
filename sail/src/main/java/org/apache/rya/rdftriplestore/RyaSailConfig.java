@@ -19,19 +19,15 @@
 package org.apache.rya.rdftriplestore;
 
 import org.apache.rya.accumulo.AccumuloRdfConfiguration;
+import org.apache.rya.api.RdfCloudTripleStoreConstants;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.Models;
-import org.eclipse.rdf4j.repository.sail.config.SailRepositorySchema;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.config.AbstractSailImplConfig;
 import org.eclipse.rdf4j.sail.config.SailConfigException;
-
-import java.util.Optional;
 
 public class RyaSailConfig extends AbstractSailImplConfig {
 
@@ -43,9 +39,11 @@ public class RyaSailConfig extends AbstractSailImplConfig {
     private static final IRI ACCUMULO_PASSWORD = VF.createIRI(NAMESPACE + "accumuloPassword");
     private static final IRI ACCUMULO_ZOOKEEPER_SERVERS = VF.createIRI(NAMESPACE + "accumuloZookeeperServers");
     private static final IRI ELASTICSEARCH_HOST = VF.createIRI(NAMESPACE + "elasticsearchHost");
+    private static final IRI ELASTICSEARCH_MAX_DOCUMENTS = VF.createIRI(NAMESPACE + "elasticsearchMaxDocuments");
 
     private AccumuloRdfConfiguration accumuloConf;
     private String elasticsearchHost;
+    private int elasticsearchMaxDocuments;
 
     public AccumuloRdfConfiguration getAccumuloConf() {
         return accumuloConf;
@@ -69,6 +67,7 @@ public class RyaSailConfig extends AbstractSailImplConfig {
 
         if (elasticsearchHost != null) {
             m.add(implNode, ELASTICSEARCH_HOST, vf.createLiteral(elasticsearchHost));
+            m.add(implNode, ELASTICSEARCH_MAX_DOCUMENTS, vf.createLiteral(elasticsearchMaxDocuments));
         }
 
         return implNode;
@@ -94,12 +93,18 @@ public class RyaSailConfig extends AbstractSailImplConfig {
                 .orElse(null);
         accumuloConf.setAccumuloZookeepers(accumuloZookeeperServers);
 
-        String tablePrefix = Models.getPropertyString(m, implNode, TABLE_PREFIX).orElse("triplestore_");
+        String tablePrefix = Models.getPropertyString(m, implNode, TABLE_PREFIX)
+                .orElse(RdfCloudTripleStoreConstants.TBL_PRFX_DEF);
         accumuloConf.setTablePrefix(tablePrefix);
 
         elasticsearchHost = Models.getPropertyString(m, implNode, ELASTICSEARCH_HOST).orElse(null);
-        if (elasticsearchHost != null && elasticsearchHost.isEmpty()) {
-            elasticsearchHost = null;
+        if (elasticsearchHost != null) {
+            if (elasticsearchHost.isEmpty()) {
+                elasticsearchHost = null;
+            } else {
+                elasticsearchMaxDocuments = Models.getPropertyLiteral(m, implNode, ELASTICSEARCH_MAX_DOCUMENTS)
+                        .orElse(SimpleValueFactory.getInstance().createLiteral(100)).intValue();
+            }
         }
 
         accumuloConf.setDisplayQueryPlan(true);

@@ -67,7 +67,7 @@ under the License.
         <module>web</module>
     </modules>
     <properties>
-        <org.eclipse.rdf4j.version>2.4-SNAPSHOT</org.eclipse.rdf4j.version> <!-- Newest: 2.3.1 -->
+        <org.eclipse.rdf4j.version>2.4.2</org.eclipse.rdf4j.version> <!-- Newest: 2.3.1 -->
 
         <accumulo.version>1.9.2</accumulo.version> <!-- Newest: 1.7.0 -->
         <hadoop.version>2.6.4</hadoop.version> <!-- Newest: 2.7.1 -->
@@ -713,6 +713,12 @@ under the License.
             <dependency>
                 <groupId>org.eclipse.rdf4j</groupId>
                 <artifactId>rdf4j-sail-elasticsearch</artifactId>
+                <version>${org.eclipse.rdf4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.eclipse.rdf4j</groupId>
+                <artifactId>rdf4j-config</artifactId>
                 <version>${org.eclipse.rdf4j.version}</version>
             </dependency>
 

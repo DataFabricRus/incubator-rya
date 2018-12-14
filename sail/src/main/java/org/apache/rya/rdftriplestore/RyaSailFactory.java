@@ -74,15 +74,16 @@ public class RyaSailFactory implements SailFactory {
                 GraphMiningSail<AccumuloRdfConfiguration> gmSail = new GraphMiningSail<>(store);
 
                 if (ryaSailConfig.getElasticsearchHost() != null) {
-                    LuceneSail luceneSail = new LuceneSail();
-                    luceneSail.setParameter(LuceneSail.INDEX_CLASS_KEY, ElasticsearchIndex.class.getName());
-                    luceneSail.setParameter(LuceneSail.EVALUATION_MODE_KEY, TupleFunctionEvaluationMode.NATIVE.name());
-                    luceneSail.setParameter(ElasticsearchIndex.TRANSPORT_KEY, ryaSailConfig.getElasticsearchHost());
-                    luceneSail.setParameter(ElasticsearchIndex.INDEX_NAME_KEY, ElasticsearchIndex.DEFAULT_INDEX_NAME);
-                    luceneSail.setParameter(ElasticsearchIndex.DOCUMENT_TYPE_KEY, ElasticsearchIndex.DEFAULT_DOCUMENT_TYPE);
-                    luceneSail.setBaseSail(gmSail);
+                    LuceneSail fullTextSail = new LuceneSail();
+                    fullTextSail.setParameter(LuceneSail.INDEX_CLASS_KEY, ElasticsearchIndex.class.getName());
+                    fullTextSail.setParameter(LuceneSail.EVALUATION_MODE_KEY, TupleFunctionEvaluationMode.NATIVE.name());
+                    fullTextSail.setParameter(LuceneSail.MAX_DOCUMENTS_KEY, "100");
+                    fullTextSail.setParameter(ElasticsearchIndex.TRANSPORT_KEY, ryaSailConfig.getElasticsearchHost());
+                    fullTextSail.setParameter(ElasticsearchIndex.INDEX_NAME_KEY, ElasticsearchIndex.DEFAULT_INDEX_NAME);
+                    fullTextSail.setParameter(ElasticsearchIndex.DOCUMENT_TYPE_KEY, ElasticsearchIndex.DEFAULT_DOCUMENT_TYPE);
+                    fullTextSail.setBaseSail(gmSail);
 
-                    return luceneSail;
+                    return fullTextSail;
                 } else {
                     return gmSail;
                 }

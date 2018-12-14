@@ -6,6 +6,8 @@
         </encoder>
     </appender>
 
+    <logger name="org.apache.rya.rdftriplestore.RdfCloudTripleStoreConnection" level="DEBUG"/>
+
     <root>
         <level value="INFO"/>
         <appender-ref ref="STDOUT"/>

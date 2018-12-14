@@ -21,6 +21,7 @@
          rya:accumuloPassword "{%Accumulo Password|%}" ;
          rya:accumuloZookeeperServers "{%Accumulo Zookeeper Servers|%}" ;
 
-         rya:elasticsearchHost "{%Elasticsearch Host|%}"
+         rya:elasticsearchHost "{%Elasticsearch Host|%}" ;
+         rya:elasticsearchMaxDocuments "{%Elasticsearch Max Documents|%}"
       ]
 ].

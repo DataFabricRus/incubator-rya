@@ -180,6 +180,8 @@ public class RdfCloudTripleStoreConnection<C extends RdfCloudTripleStoreConfigur
     protected CloseableIteration<? extends BindingSet, QueryEvaluationException> evaluateInternal(
             TupleExpr tupleExpr, final Dataset dataset, BindingSet bindings,
             final boolean flag) throws SailException {
+        long startWatch = System.nanoTime();
+
         verifyIsOpen();
         logger.trace("Incoming query model:\n{}", tupleExpr.toString());
         if (provenanceCollector != null) {
@@ -372,8 +374,16 @@ public class RdfCloudTripleStoreConnection<C extends RdfCloudTripleStoreConfigur
                 }
             }
 
+            long stopWatch = System.nanoTime();
+            logger.debug("Query plan built in {} ms", (stopWatch - startWatch) / 1000000);
+
+            startWatch = System.nanoTime();
             final CloseableIteration<BindingSet, QueryEvaluationException> iter = strategy
                     .evaluate(tupleExpr, EmptyBindingSet.getInstance());
+
+            stopWatch = System.nanoTime();
+            logger.debug("Query executed in {} ms", (stopWatch - startWatch) / 1000000);
+
             return new CloseableIteration<BindingSet, QueryEvaluationException>() {
 
                 @Override
@@ -397,8 +407,6 @@ public class RdfCloudTripleStoreConnection<C extends RdfCloudTripleStoreConfigur
                     strategy.shutdown();
                 }
             };
-        } catch (final QueryEvaluationException e) {
-            throw new SailException(e);
         } catch (final Exception e) {
             throw new SailException(e);
         }
@@ -546,6 +554,8 @@ public class RdfCloudTripleStoreConnection<C extends RdfCloudTripleStoreConfigur
 
                 ryaDAO.delete(statement, conf);
             }
+
+            notifySailConnectionListenersAboutRemovedStatement(subject, predicate, object, contexts);
         } catch (final RyaDAOException e) {
             throw new SailException(e);
         }

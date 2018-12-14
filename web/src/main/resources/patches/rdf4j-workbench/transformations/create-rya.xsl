@@ -49,7 +49,7 @@
                             Table Prefix
                         </th>
                         <td>
-                            <input id="tablePrefix" name="Apache Rya Table Prefix" size="48" value="triplestore_"/>
+                            <input id="tablePrefix" name="Apache Rya Table Prefix" size="48" value="rya_"/>
                         </td>
                         <td></td>
                     </tr>
@@ -85,6 +85,14 @@
                         <th>Elasticsearch Host (optional)</th>
                         <td>
                             <input id="elasticsearchHost" name="Elasticsearch Host" size="48" value=""/>
+                        </td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th>Elasticsearch Max Documents (optional)</th>
+                        <td>
+                            <input type="number" id="elasticsearchMaxDocuments" name="Elasticsearch Max Documents"
+                                   size="6" value="100"/>
                         </td>
                         <td></td>
                     </tr>

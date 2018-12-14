@@ -18,8 +18,6 @@
  */
 package org.apache.rya.rdftriplestore;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import org.apache.rya.api.RdfCloudTripleStoreConfiguration;
 import org.apache.rya.api.persist.RdfEvalStatsDAO;
 import org.apache.rya.api.persist.RyaDAO;
@@ -32,6 +30,8 @@ import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.sail.*;
 import org.eclipse.rdf4j.sail.helpers.AbstractSail;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class RdfCloudTripleStore<C extends RdfCloudTripleStoreConfiguration>
         extends AbstractSail implements NotifyingSail {
@@ -50,6 +50,11 @@ public class RdfCloudTripleStore<C extends RdfCloudTripleStoreConfiguration>
     @Override
     protected SailConnection getConnectionInternal() throws SailException {
         return new RdfCloudTripleStoreConnection<>(this, conf, VF);
+    }
+
+    @Override
+    public NotifyingSailConnection getConnection() throws SailException {
+        return (NotifyingSailConnection) super.getConnection();
     }
 
     @Override
@@ -164,11 +169,6 @@ public class RdfCloudTripleStore<C extends RdfCloudTripleStoreConfiguration>
 
     public void setProvenanceCollector(final ProvenanceCollector provenanceCollector) {
         this.provenanceCollector = provenanceCollector;
-    }
-
-    @Override
-    public NotifyingSailConnection getConnection() throws SailException {
-        return new RdfCloudTripleStoreConnection<>(this, conf, VF);
     }
 
     @Override
