@@ -1,0 +1,34 @@
+QueryRoot
+   Projection
+      ProjectionElemList
+         ProjectionElem "instanceUri"
+         ProjectionElem "ogrnR"
+         ProjectionElem "ogrn"
+         ProjectionElem "ogrnDateR"
+         ProjectionElem "ogrnDate"
+      Join
+         BindingSetAssignment ([[instanceUri=urn:example:le:1]])
+         Join
+            StatementPattern
+               Var (name=instanceUri)
+               Var (name=_const_0_uri, value=https://w3id.org/datafabric.cc/ontologies/fibo-ru#hasRegistrationIdentifier, anonymous)
+               Var (name=ogrnR)
+            Join
+               StatementPattern
+                  Var (name=ogrnR)
+                  Var (name=_const_1_uri, value=https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/Agents/identifies, anonymous)
+                  Var (name=instanceUri)
+               Join
+                  StatementPattern
+                     Var (name=ogrnR)
+                     Var (name=_const_2_uri, value=https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Documents/hasDateOfIssuance, anonymous)
+                     Var (name=ogrnDateR)
+                  Join
+                     StatementPattern
+                        Var (name=ogrnDateR)
+                        Var (name=_const_3_uri, value=https://spec.edmcouncil.org/fibo/ontology/FND/DatesAndTimes/FinancialDates/hasDateValue, anonymous)
+                        Var (name=ogrnDate)
+                     StatementPattern
+                        Var (name=ogrnR)
+                        Var (name=_const_4_uri, value=https://spec.edmcouncil.org/fibo/ontology/FND/Relations/Relations/hasUniqueIdentifier, anonymous)
+                        Var (name=ogrn)

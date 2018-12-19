@@ -1,0 +1,10 @@
+SELECT  * WHERE {
+  ?slice rdf:type qb:Slice ;
+    qb:sliceStructure     rosstat:SliceByYearAndOrg ;
+    rosstat:refPeriod     ?refPeriod ;
+    rosstat:refOrganization  <http://example.com/legalentity/360fb2a7-4faa-53bf-ac69-61896eb2b49d> ;
+    qb:observation        ?observation .
+  ?observation  rdf:type          qb:Observation ;
+    qb:measureType        ?measureType ;
+    ?measureType          ?measureValue
+}

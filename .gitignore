@@ -62,3 +62,5 @@ delme*
 
 **/.vagrant/
 **/src/gen/**
+
+.attach_*

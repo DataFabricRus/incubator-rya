@@ -1,0 +1,34 @@
+[
+  {
+    "p": "rdf:type",
+    "o": "qb:Slice",
+    "count": 9146231.0
+  },
+  {
+    "p": "qb:sliceStructure",
+    "o": "rosstat:SliceByYearAndOrg",
+    "count": 9146231.0
+  },
+  {
+    "p": "rosstat:refPeriod",
+    "count": 9146231.0
+  },
+  {
+    "p": "rosstat:refOrganization",
+    "o": "http://example.com/legalentity/360fb2a7-4faa-53bf-ac69-61896eb2b49d",
+    "count": 5.0
+  },
+  {
+    "p": "qb:observation",
+    "count": 73169848.0
+  },
+  {
+    "p": "rdf:type",
+    "o": "qb:Observation",
+    "count": 73169848.0
+  },
+  {
+    "p": "qb:measureType",
+    "count": 73169848.0
+  }
+]

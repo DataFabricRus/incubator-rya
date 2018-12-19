@@ -18,7 +18,6 @@
  */
 package org.apache.rya.rdftriplestore;
 
-import org.apache.hadoop.conf.Configurable;
 import org.apache.rya.api.RdfCloudTripleStoreConfiguration;
 import org.apache.rya.api.RdfCloudTripleStoreConstants;
 import org.apache.rya.api.domain.RyaIRI;
@@ -30,12 +29,14 @@ import org.apache.rya.api.persist.RyaDAOException;
 import org.apache.rya.api.persist.joinselect.SelectivityEvalDAO;
 import org.apache.rya.api.persist.utils.RyaDAOHelper;
 import org.apache.rya.api.resolver.RdfToRyaConversions;
-import org.apache.rya.rdftriplestore.evaluation.*;
-import org.apache.rya.rdftriplestore.inference.*;
+import org.apache.rya.rdftriplestore.evaluation.ParallelEvaluationStrategyImpl;
+import org.apache.rya.rdftriplestore.evaluation.RdfCloudTripleStoreEvaluationStatistics;
+import org.apache.rya.rdftriplestore.evaluation.RyaEvaluationStatistics;
+import org.apache.rya.rdftriplestore.evaluation.StaticQueryPlanner;
+import org.apache.rya.rdftriplestore.inference.InferenceEngine;
 import org.apache.rya.rdftriplestore.namespace.NamespaceManager;
 import org.apache.rya.rdftriplestore.provenance.ProvenanceCollectionException;
 import org.apache.rya.rdftriplestore.provenance.ProvenanceCollector;
-import org.apache.rya.rdftriplestore.utils.DefaultStatistics;
 import org.eclipse.rdf4j.common.iteration.CloseableIteration;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
@@ -49,16 +50,14 @@ import org.eclipse.rdf4j.query.algebra.TupleExpr;
 import org.eclipse.rdf4j.query.algebra.Var;
 import org.eclipse.rdf4j.query.algebra.evaluation.EvaluationStrategy;
 import org.eclipse.rdf4j.query.algebra.evaluation.QueryBindingSet;
-import org.eclipse.rdf4j.query.algebra.evaluation.QueryOptimizer;
 import org.eclipse.rdf4j.query.algebra.evaluation.TripleSource;
-import org.eclipse.rdf4j.query.algebra.evaluation.impl.*;
+import org.eclipse.rdf4j.query.algebra.evaluation.impl.EvaluationStatistics;
 import org.eclipse.rdf4j.query.impl.EmptyBindingSet;
 import org.eclipse.rdf4j.sail.NotifyingSailConnection;
 import org.eclipse.rdf4j.sail.SailConnectionListener;
 import org.eclipse.rdf4j.sail.SailException;
 import org.eclipse.rdf4j.sail.helpers.AbstractSailConnection;
 
-import java.lang.reflect.Constructor;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.Map.Entry;
@@ -252,127 +251,12 @@ public class RdfCloudTripleStoreConnection<C extends RdfCloudTripleStoreConfigur
         }
 
         try {
-            final List<Class<QueryOptimizer>> optimizers = queryConf.getOptimizers();
-            final Class<QueryOptimizer> pcjOptimizer = queryConf.getPcjOptimizer();
-
-            if (pcjOptimizer != null) {
-                QueryOptimizer opt = null;
-                try {
-                    final Constructor<QueryOptimizer> construct = pcjOptimizer.getDeclaredConstructor();
-                    opt = construct.newInstance();
-                } catch (final Exception e) {
-                }
-                if (opt == null) {
-                    throw new NoSuchMethodException("Could not find valid constructor for " + pcjOptimizer.getName());
-                }
-                if (opt instanceof Configurable) {
-                    ((Configurable) opt).setConf(conf);
-                }
-                opt.optimize(tupleExpr, dataset, bindings);
-            }
-
-            final ParallelEvaluationStrategyImpl strategy = new ParallelEvaluationStrategyImpl(
+            final EvaluationStrategy strategy = new ParallelEvaluationStrategyImpl(
                     new StoreTripleSource<C>(queryConf, ryaDAO), inferenceEngine, dataset, queryConf);
+            final EvaluationStatistics statistics = new RyaEvaluationStatistics<C>(queryConf, rdfEvalStatsDAO);
 
-            (new BindingAssigner()).optimize(tupleExpr, dataset, bindings);
-            (new ConstantOptimizer(strategy)).optimize(tupleExpr, dataset,
-                    bindings);
-            (new CompareOptimizer()).optimize(tupleExpr, dataset, bindings);
-            (new ConjunctiveConstraintSplitter()).optimize(tupleExpr, dataset,
-                    bindings);
-            (new DisjunctiveConstraintOptimizer()).optimize(tupleExpr, dataset,
-                    bindings);
-            (new SameTermFilterOptimizer()).optimize(tupleExpr, dataset,
-                    bindings);
-            (new QueryModelNormalizer()).optimize(tupleExpr, dataset, bindings);
-
-            (new IterativeEvaluationOptimizer()).optimize(tupleExpr, dataset,
-                    bindings);
-
-            if (!optimizers.isEmpty()) {
-                for (final Class<QueryOptimizer> optclz : optimizers) {
-                    QueryOptimizer result = null;
-                    try {
-                        final Constructor<QueryOptimizer> meth = optclz.getDeclaredConstructor();
-                        result = meth.newInstance();
-                    } catch (final Exception e) {
-                    }
-                    try {
-                        final Constructor<QueryOptimizer> meth = optclz.getDeclaredConstructor(EvaluationStrategy.class);
-                        result = meth.newInstance(strategy);
-                    } catch (final Exception e) {
-                    }
-                    if (result == null) {
-                        throw new NoSuchMethodException("Could not find valid constructor for " + optclz.getName());
-                    }
-                    if (result instanceof Configurable) {
-                        ((Configurable) result).setConf(conf);
-                    }
-                    result.optimize(tupleExpr, dataset, bindings);
-                }
-            }
-
-            (new FilterOptimizer()).optimize(tupleExpr, dataset, bindings);
-            (new OrderLimitOptimizer()).optimize(tupleExpr, dataset, bindings);
-
-            logger.trace("Optimized query model:\n{}", tupleExpr.toString());
-
-            if (queryConf.isInfer()
-                    && this.inferenceEngine != null
-            ) {
-                try {
-                    tupleExpr.visit(new DomainRangeVisitor(queryConf, inferenceEngine));
-                    tupleExpr.visit(new SomeValuesFromVisitor(queryConf, inferenceEngine));
-                    tupleExpr.visit(new AllValuesFromVisitor(queryConf, inferenceEngine));
-                    tupleExpr.visit(new HasValueVisitor(queryConf, inferenceEngine));
-                    tupleExpr.visit(new IntersectionOfVisitor(queryConf, inferenceEngine));
-                    tupleExpr.visit(new ReflexivePropertyVisitor(queryConf, inferenceEngine));
-                    tupleExpr.visit(new PropertyChainVisitor(queryConf, inferenceEngine));
-                    tupleExpr.visit(new TransitivePropertyVisitor(queryConf, inferenceEngine));
-                    tupleExpr.visit(new SymmetricPropertyVisitor(queryConf, inferenceEngine));
-                    tupleExpr.visit(new InverseOfVisitor(queryConf, inferenceEngine));
-                    tupleExpr.visit(new SubPropertyOfVisitor(queryConf, inferenceEngine));
-                    tupleExpr.visit(new SubClassOfVisitor(queryConf, inferenceEngine));
-                    tupleExpr.visit(new SameAsVisitor(queryConf, inferenceEngine));
-                    tupleExpr.visit(new OneOfVisitor(queryConf, inferenceEngine));
-                    tupleExpr.visit(new HasSelfVisitor(queryConf, inferenceEngine));
-                } catch (final Exception e) {
-                    logger.error("Error encountered while visiting query node.", e);
-                }
-            }
-            if (queryConf.isPerformant()) {
-                tupleExpr.visit(new SeparateFilterJoinsVisitor());
-//                tupleExpr.visit(new FilterTimeIndexVisitor(queryConf));
-//                tupleExpr.visit(new PartitionFilterTimeIndexVisitor(queryConf));
-            }
-            final FilterRangeVisitor rangeVisitor = new FilterRangeVisitor(queryConf);
-            tupleExpr.visit(rangeVisitor);
-            tupleExpr.visit(rangeVisitor); //this has to be done twice to get replace the statementpatterns with the right ranges
-            EvaluationStatistics stats = null;
-            if (!queryConf.isUseStats() && queryConf.isPerformant() || rdfEvalStatsDAO == null) {
-                stats = new DefaultStatistics();
-            } else if (queryConf.isUseStats()) {
-
-                if (queryConf.isUseSelectivity()) {
-                    stats = new RdfCloudTripleStoreSelectivityEvaluationStatistics<C>(queryConf, rdfEvalStatsDAO,
-                            selectEvalDAO);
-                } else {
-                    stats = new RdfCloudTripleStoreEvaluationStatistics<C>(queryConf, rdfEvalStatsDAO);
-                }
-            }
-            if (stats != null) {
-
-                if (stats instanceof RdfCloudTripleStoreSelectivityEvaluationStatistics) {
-                    final QueryJoinSelectOptimizer qjso = new QueryJoinSelectOptimizer(stats, selectEvalDAO);
-                    qjso.optimize(tupleExpr, dataset, bindings);
-                } else {
-//                    final QueryJoinOptimizer qjo = new QueryJoinOptimizer(stats);
-//                    qjo.optimize(tupleExpr, dataset, bindings); // TODO: Make pluggable
-
-                    final QueryOptimizer qjo = new ConjunctiveJoinOptimizer(stats);
-                    qjo.optimize(tupleExpr, dataset, bindings);
-                }
-            }
+            final StaticQueryPlanner queryPlanner = new StaticQueryPlanner(strategy, statistics);
+            queryPlanner.optimize(tupleExpr, dataset, bindings);
 
             long stopWatch = System.nanoTime();
             logger.debug("Query plan built in {} ms", (stopWatch - startWatch) / 1000000);
@@ -382,7 +266,7 @@ public class RdfCloudTripleStoreConnection<C extends RdfCloudTripleStoreConfigur
                     .evaluate(tupleExpr, EmptyBindingSet.getInstance());
 
             stopWatch = System.nanoTime();
-            logger.debug("Query executed in {} ms", (stopWatch - startWatch) / 1000000);
+            logger.debug("BindingSet iterator prepared in {} ms", (stopWatch - startWatch) / 1000000);
 
             return new CloseableIteration<BindingSet, QueryEvaluationException>() {
 
@@ -404,7 +288,7 @@ public class RdfCloudTripleStoreConnection<C extends RdfCloudTripleStoreConfigur
                 @Override
                 public void close() throws QueryEvaluationException {
                     iter.close();
-                    strategy.shutdown();
+                    ((ParallelEvaluationStrategyImpl) strategy).shutdown();
                 }
             };
         } catch (final Exception e) {

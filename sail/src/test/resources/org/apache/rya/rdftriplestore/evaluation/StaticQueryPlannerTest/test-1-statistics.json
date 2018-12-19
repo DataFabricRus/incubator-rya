@@ -1,0 +1,22 @@
+[
+  {
+    "p": "fibo-ru:hasRegistrationIdentifier",
+    "count": 499743.0
+  },
+  {
+    "p": "fibo-fnd-aap-agt:identifies",
+    "count": 2308668.0
+  },
+  {
+    "p": "fibo-fnd-rel-rel:hasUniqueIdentifier",
+    "count": 2308598.0
+  },
+  {
+    "p": "fibo-fnd-arr-doc:hasDateOfIssuance",
+    "count": 2308598.0
+  },
+  {
+    "p": "fibo-fnd-dt-fd:hasDateValue",
+    "count": 2307832.0
+  }
+]

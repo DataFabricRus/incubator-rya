@@ -1,0 +1,11 @@
+SELECT * {
+    VALUES ?instanceUri { <urn:example:le:1> }
+
+    ?instanceUri fibo-ru:hasRegistrationIdentifier ?ogrnR .
+
+    ?ogrnR fibo-fnd-aap-agt:identifies ?instanceUri ;
+        fibo-fnd-rel-rel:hasUniqueIdentifier ?ogrn ;
+        fibo-fnd-arr-doc:hasDateOfIssuance ?ogrnDateR .
+
+    ?ogrnDateR fibo-fnd-dt-fd:hasDateValue ?ogrnDate .
+}

@@ -1,0 +1,47 @@
+QueryRoot
+   Projection
+      ProjectionElemList
+         ProjectionElem "slice"
+         ProjectionElem "refPeriod"
+         ProjectionElem "observation"
+         ProjectionElem "measureType"
+         ProjectionElem "measureValue"
+      Join
+         StatementPattern
+            Var (name=slice)
+            Var (name=_const_0_uri, value=https://w3id.org/datafabric.cc/ontologies/rosstat#refOrganization, anonymous)
+            Var (name=_const_1_uri, value=http://example.com/legalentity/360fb2a7-4faa-53bf-ac69-61896eb2b49d, anonymous)
+         Join
+            StatementPattern
+               Var (name=slice)
+               Var (name=_const_2_uri, value=http://www.w3.org/1999/02/22-rdf-syntax-ns#type, anonymous)
+               Var (name=_const_3_uri, value=http://purl.org/linked-data/cube#Slice, anonymous)
+            Join
+               StatementPattern
+                  Var (name=slice)
+                  Var (name=_const_4_uri, value=http://purl.org/linked-data/cube#sliceStructure, anonymous)
+                  Var (name=_const_5_uri, value=https://w3id.org/datafabric.cc/ontologies/rosstat#SliceByYearAndOrg, anonymous)
+               Join
+                  StatementPattern
+                     Var (name=slice)
+                     Var (name=_const_6_uri, value=http://purl.org/linked-data/cube#observation, anonymous)
+                     Var (name=observation)
+                  Join
+                     StatementPattern
+                        Var (name=observation)
+                        Var (name=_const_2_uri, value=http://www.w3.org/1999/02/22-rdf-syntax-ns#type, anonymous)
+                        Var (name=_const_7_uri, value=http://purl.org/linked-data/cube#Observation, anonymous)
+                     Join
+                        StatementPattern
+                           Var (name=slice)
+                           Var (name=_const_8_uri, value=https://w3id.org/datafabric.cc/ontologies/rosstat#refPeriod, anonymous)
+                           Var (name=refPeriod)
+                        Join
+                           StatementPattern
+                              Var (name=observation)
+                              Var (name=_const_9_uri, value=http://purl.org/linked-data/cube#measureType, anonymous)
+                              Var (name=measureType)
+                           StatementPattern
+                              Var (name=observation)
+                              Var (name=measureType)
+                              Var (name=measureValue)

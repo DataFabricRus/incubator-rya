@@ -136,8 +136,6 @@ public class ProspectorServiceEvalStatsDAO<T extends RdfCloudTripleStoreConfigur
             throw new RdfDAOException(e);
         }
 
-        LOG.info("Cardinality of {} is {}", Arrays.toString(val.toArray()), cardinality);
-
         return cardinality;
     }
 

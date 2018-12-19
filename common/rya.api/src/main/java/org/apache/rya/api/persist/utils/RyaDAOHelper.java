@@ -48,23 +48,17 @@ import org.slf4j.LoggerFactory;
  */
 public class RyaDAOHelper {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RyaDAOHelper.class);
-
     public static CloseableIteration<Statement, QueryEvaluationException> query(RyaDAO ryaDAO, Resource subject, IRI predicate, Value object, RdfCloudTripleStoreConfiguration conf, Resource... contexts) throws QueryEvaluationException {
         return query(ryaDAO, new NullableStatementImpl(subject, predicate, object, contexts), conf);
     }
 
     public static CloseableIteration<Statement, QueryEvaluationException> query(RyaDAO ryaDAO, Statement stmt, RdfCloudTripleStoreConfiguration conf) throws QueryEvaluationException {
-        LOG.info("Started fetching {}...", stmt);
-
         final CloseableIteration<RyaStatement, RyaDAOException> query;
         try {
             long start = System.currentTimeMillis();
 
             query = ryaDAO.getQueryEngine().query(RdfToRyaConversions.convertStatement(stmt),
                     conf);
-
-            LOG.info("Time to prefetch a single statement - {}ms", (System.currentTimeMillis() - start));
         } catch (RyaDAOException e) {
             throw new QueryEvaluationException(e);
         }
@@ -120,8 +114,6 @@ public class RyaDAOHelper {
     }
 
     public static CloseableIteration<? extends Map.Entry<Statement, BindingSet>, QueryEvaluationException> query(RyaDAO ryaDAO, Collection<Map.Entry<Statement, BindingSet>> statements, RdfCloudTripleStoreConfiguration conf) throws QueryEvaluationException {
-        LOG.info("Started fetching statements with bindings...");
-
         Collection<Map.Entry<RyaStatement, BindingSet>> ryaStatements = new ArrayList<>(statements.size());
         for (Map.Entry<Statement, BindingSet> entry : statements) {
             ryaStatements.add(new RdfCloudTripleStoreUtils.CustomEntry<>
@@ -129,12 +121,7 @@ public class RyaDAOHelper {
         }
         final CloseableIteration<? extends Map.Entry<RyaStatement, BindingSet>, RyaDAOException> query;
         try {
-            long start = System.currentTimeMillis();
-
             query = ryaDAO.getQueryEngine().queryWithBindingSet(ryaStatements, conf);
-
-            LOG.info("Time to prefetch {} statements - {}ms",
-                    statements.size(), (System.currentTimeMillis() - start));
         } catch (RyaDAOException e) {
             throw new QueryEvaluationException(e);
         }
