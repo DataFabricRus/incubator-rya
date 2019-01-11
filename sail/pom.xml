@@ -123,8 +123,13 @@ under the License.
                             <!-- RDF data Files -->
                             <exclude>**/*.trig</exclude>
                             <exclude>**/*.nt</exclude>
+                            <exclude>**/*.ttl</exclude>
                             <!-- Services Files -->
                             <exclude>**/resources/META-INF/services/**</exclude>
+                            <!-- Test resources -->
+                            <exclude>src/test/resources/**/*.sparql</exclude>
+                            <exclude>src/test/resources/**/*.json</exclude>
+                            <exclude>src/test/resources/**/*.qp</exclude>
                         </excludes>
                     </configuration>
                 </plugin>

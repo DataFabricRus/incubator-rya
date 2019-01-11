@@ -71,6 +71,7 @@ public class RDFPropertyFilter extends Filter {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public SortedKeyValueIterator<Key, Value> deepCopy(IteratorEnvironment env) {
         return new RDFPropertyFilter(getSource().deepCopy(env), (HashSet<ByteBuffer>) properties.clone());
     }
@@ -99,7 +100,7 @@ public class RDFPropertyFilter extends Filter {
     @Override
     public IteratorOptions describeOptions() {
         IteratorOptions options = super.describeOptions();
-        options.addNamedOption(OPTION_PROPERTIES, "properties to accept or not");
+        options.addNamedOption(OPTION_PROPERTIES, "properties to accept");
 
         return options;
     }

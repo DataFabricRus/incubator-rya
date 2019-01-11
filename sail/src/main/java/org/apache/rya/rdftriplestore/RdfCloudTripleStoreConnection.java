@@ -30,9 +30,8 @@ import org.apache.rya.api.persist.joinselect.SelectivityEvalDAO;
 import org.apache.rya.api.persist.utils.RyaDAOHelper;
 import org.apache.rya.api.resolver.RdfToRyaConversions;
 import org.apache.rya.rdftriplestore.evaluation.ParallelEvaluationStrategyImpl;
-import org.apache.rya.rdftriplestore.evaluation.RdfCloudTripleStoreEvaluationStatistics;
 import org.apache.rya.rdftriplestore.evaluation.RyaEvaluationStatistics;
-import org.apache.rya.rdftriplestore.evaluation.StaticQueryPlanner;
+import org.apache.rya.rdftriplestore.evaluation.RyaQueryPlanner;
 import org.apache.rya.rdftriplestore.inference.InferenceEngine;
 import org.apache.rya.rdftriplestore.namespace.NamespaceManager;
 import org.apache.rya.rdftriplestore.provenance.ProvenanceCollectionException;
@@ -255,7 +254,7 @@ public class RdfCloudTripleStoreConnection<C extends RdfCloudTripleStoreConfigur
                     new StoreTripleSource<C>(queryConf, ryaDAO), inferenceEngine, dataset, queryConf);
             final EvaluationStatistics statistics = new RyaEvaluationStatistics<C>(queryConf, rdfEvalStatsDAO);
 
-            final StaticQueryPlanner queryPlanner = new StaticQueryPlanner(strategy, statistics);
+            final RyaQueryPlanner queryPlanner = new RyaQueryPlanner(strategy, statistics);
             queryPlanner.optimize(tupleExpr, dataset, bindings);
 
             long stopWatch = System.nanoTime();

@@ -37,6 +37,13 @@ import static org.apache.rya.api.RdfCloudTripleStoreConstants.LAST_BYTES;
 
 public class RangeUtils {
 
+    public static Range createRange(final RyaIRI subject) {
+        final byte[] startKey = Bytes.concat(subject.getData().getBytes(StandardCharsets.UTF_8), DELIM_BYTES);
+        final byte[] endKey = Bytes.concat(subject.getData().getBytes(StandardCharsets.UTF_8), LAST_BYTES);
+
+        return new Range(new Key(startKey), new Key(endKey));
+    }
+
     public static Range createRange(final RyaIRI fromSubject, final RyaIRI toSubject) {
         return createRange(fromSubject, toSubject, null, null);
     }
